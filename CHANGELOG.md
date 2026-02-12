@@ -1,3 +1,9 @@
+## [2.0.6](https://github.com/bertrandgressier/jup-cli/compare/v2.0.5...v2.0.6) (2026-02-12)
+
+### Bug Fixes
+
+- update version to 2.0.5 and program name to jup-cli ([a84515c](https://github.com/bertrandgressier/jup-cli/commit/a84515c53569969da926eb27171511950c754f70))
+
 ## [2.0.5](https://github.com/bertrandgressier/jup-cli/compare/v2.0.4...v2.0.5) (2026-02-12)
 
 ### Bug Fixes
