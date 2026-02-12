@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/bertrandgressier/jupiter-cli/compare/v1.0.0...v2.0.0) (2026-02-12)
+
+### Bug Fixes
+
+- **ci:** add @eslint/js and fix eslint config for ESLint 9.x ([f16cf0a](https://github.com/bertrandgressier/jupiter-cli/commit/f16cf0ac3569094cf2bfdbd4a0d098f6e1d5e77b))
+- **ci:** add build step before tests and lower coverage thresholds ([de5d4d0](https://github.com/bertrandgressier/jupiter-cli/commit/de5d4d0e435c8cd9818b3607487f3a490c802928))
+- **ci:** correct test command syntax for pnpm ([b005a3a](https://github.com/bertrandgressier/jupiter-cli/commit/b005a3afff000f16f815e624e5e209416667c431))
+- migrate to ESLint 9.x flat config format ([a0993a8](https://github.com/bertrandgressier/jupiter-cli/commit/a0993a8567b36ad220ffe09594ce77e5d6c93711))
+- **tests:** skip flaky tests and fix e2e command option ([393bc0d](https://github.com/bertrandgressier/jupiter-cli/commit/393bc0d6959eb5adc16e9b7411c392a8e6191dcc))
+
+### chore
+
+- migrate to pnpm and update dependencies to latest versions ([ad32518](https://github.com/bertrandgressier/jupiter-cli/commit/ad32518dcf4c456a422d1976e2b8b483e8c5b5a5))
+
+### BREAKING CHANGES
+
+- Now requires Node.js >=20 and pnpm
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
