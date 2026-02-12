@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/bertrandgressier/jup-cli/compare/v2.0.4...v2.0.5) (2026-02-12)
+
+### Bug Fixes
+
+- move prisma to dependencies for postinstall hook ([5bf3492](https://github.com/bertrandgressier/jup-cli/commit/5bf349229e5179be6fea329eb74794944ce9daad))
+- update pnpm-lock.yaml ([0a40248](https://github.com/bertrandgressier/jup-cli/commit/0a40248ae1586bfc330297d5ff2c1048e373a206))
+
 ## [2.0.4](https://github.com/bertrandgressier/jup-cli/compare/v2.0.3...v2.0.4) (2026-02-12)
 
 ### Bug Fixes
