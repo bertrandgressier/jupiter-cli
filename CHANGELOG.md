@@ -1,3 +1,9 @@
+## [2.0.7](https://github.com/bertrandgressier/jup-cli/compare/v2.0.6...v2.0.7) (2026-02-12)
+
+### Bug Fixes
+
+- read version from package.json at runtime ([0634931](https://github.com/bertrandgressier/jup-cli/commit/063493150154edc66856a0fcc9306865b52946fc))
+
 ## [2.0.6](https://github.com/bertrandgressier/jup-cli/compare/v2.0.5...v2.0.6) (2026-02-12)
 
 ### Bug Fixes
