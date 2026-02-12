@@ -11,6 +11,12 @@ process.on('warning', (warning) => {
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+const VERSION = packageJson.version;
+
 import { createInitCommand } from './interface/cli/commands/init/init.cmd';
 import { createWalletCommands } from './interface/cli/commands/wallet/wallet.cmd';
 import { createPriceCommands } from './interface/cli/commands/price/price.cmd';
@@ -75,7 +81,6 @@ function getPrismaClient(): PrismaClient {
   return PrismaClientFactory.getInstance();
 }
 
-const VERSION = '2.0.5';
 const program = new Command();
 
 program

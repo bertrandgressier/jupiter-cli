@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as packageJson from '../../package.json';
 
 describe('CLI End-to-End Tests', () => {
   const testDataDir = path.join(__dirname, 'fixtures', 'e2e-test-data');
@@ -137,7 +138,7 @@ describe('CLI End-to-End Tests', () => {
     it('should show version', () => {
       const output = runCLI('--version');
 
-      expect(output).toContain('2.0.5');
+      expect(output).toContain(packageJson.version);
     });
 
     it('should show help', () => {
