@@ -1,3 +1,9 @@
+## [2.0.2](https://github.com/bertrandgressier/jupiter-cli/compare/v2.0.1...v2.0.2) (2026-02-12)
+
+### Bug Fixes
+
+- republish to npm ([1733ca1](https://github.com/bertrandgressier/jupiter-cli/commit/1733ca183e552ce7fe6a3b4aabbffb663f6cf97c))
+
 ## [2.0.1](https://github.com/bertrandgressier/jupiter-cli/compare/v2.0.0...v2.0.1) (2026-02-12)
 
 ### Bug Fixes
