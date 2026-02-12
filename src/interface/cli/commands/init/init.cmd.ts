@@ -136,7 +136,9 @@ export function createInitCommand(getDataDir: () => string | undefined): Command
 
         console.log(chalk.cyan('\n🔐 Session Info:'));
         console.log(chalk.dim('The agent can operate autonomously with the session.'));
-        console.log(chalk.dim('Protected commands (wallet export, delete, transfer) require password.'));
+        console.log(
+          chalk.dim('Protected commands (wallet export, delete, transfer) require password.')
+        );
 
         if (dataDir) {
           console.log(chalk.dim(`\n⚠️  Remember to use --data-dir ${dataDir} for all commands`));

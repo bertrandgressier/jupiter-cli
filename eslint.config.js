@@ -16,6 +16,7 @@ export default [
       globals: {
         ...globals.node,
         ...globals.es2022,
+        NodeJS: 'readonly',
       },
     },
     plugins: {
@@ -23,13 +24,27 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
+    },
+  },
+  {
+    files: ['tests/**/*.ts', 'tests/**/*.tsx'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+        ...globals.jest,
+        NodeJS: 'readonly',
+      },
     },
   },
   {

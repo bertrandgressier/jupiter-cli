@@ -106,7 +106,9 @@ export function createTradeCommands(
 
         console.log(chalk.bold('📊 Order\n'));
         console.log(`  Input:  ${chalk.cyan(amount)} ${inputToken.toUpperCase()}`);
-        console.log(`  Output: ${chalk.green(outputAmount.toFixed(6))} ${outputToken.toUpperCase()}`);
+        console.log(
+          `  Output: ${chalk.green(outputAmount.toFixed(6))} ${outputToken.toUpperCase()}`
+        );
         console.log(
           `  Price Impact: ${
             priceImpact > 1
@@ -116,9 +118,7 @@ export function createTradeCommands(
         );
         console.log(`  Slippage: ${order.slippageBps / 100}%`);
         if (order.routePlan && order.routePlan.length > 0) {
-          console.log(
-            `  Route: ${order.routePlan.map((r) => r.swapInfo.label).join(' → ')}`
-          );
+          console.log(`  Route: ${order.routePlan.map((r) => r.swapInfo.label).join(' → ')}`);
         }
         console.log();
 
@@ -205,7 +205,9 @@ export function createTradeCommands(
         }
       } catch (error) {
         spinner.fail('Swap failed');
-        console.error(chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`));
+        console.error(
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
+        );
         process.exit(1);
       }
     });

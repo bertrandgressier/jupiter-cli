@@ -119,7 +119,7 @@ export class ConnectionService implements BlockchainPort {
 
       const account = await getAccount(this.connection, tokenAccount);
       return Number(account.amount);
-    } catch (error) {
+    } catch (_error) {
       LoggerService.getInstance().debug(`No token account found for ${mint}`);
       return 0;
     }

@@ -12,7 +12,11 @@ jest.mock('@solana/web3.js', () => {
 
 describe('Solana Blockchain Mocks', () => {
   let connectionService: ConnectionService;
-  let mockConnection: any;
+  let mockConnection: {
+    getBalance: jest.Mock;
+    getParsedTransaction: jest.Mock;
+    getSignaturesForAddress: jest.Mock;
+  };
 
   beforeEach(() => {
     // Setup mock connection

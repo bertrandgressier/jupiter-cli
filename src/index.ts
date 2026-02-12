@@ -129,7 +129,7 @@ program.on('--help', () => {
 async function cleanup() {
   try {
     await PrismaClientFactory.disconnect();
-  } catch (err) {
+  } catch (_err) {
     // Ignore errors during cleanup
   }
   process.exit(0);

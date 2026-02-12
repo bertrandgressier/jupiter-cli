@@ -1,5 +1,10 @@
 import { JupiterClient, jupiterClient } from '../shared/jupiter-client';
-import { PriceResult, TokenInfo, PriceApiResponse, PriceDataEntry } from '../../../application/ports/jupiter-api.port';
+import {
+  PriceResult,
+  TokenInfo,
+  PriceApiResponse,
+  PriceDataEntry,
+} from '../../../application/ports/jupiter-api.port';
 import { LoggerService } from '../../../core/logger/logger.service';
 
 export interface UltraOrderResponse {
@@ -67,7 +72,13 @@ export class UltraApiService {
         params.slippageBps = slippageBps;
       }
 
-      LoggerService.getInstance().debug('Getting Ultra order', { inputMint, outputMint, amount, taker, slippageBps });
+      LoggerService.getInstance().debug('Getting Ultra order', {
+        inputMint,
+        outputMint,
+        amount,
+        taker,
+        slippageBps,
+      });
 
       const response = await this.client.get<UltraOrderResponse>(`${this.baseUrl}/order`, params);
 
@@ -107,7 +118,9 @@ export class UltraApiService {
 
       const response = await this.client.get<PriceApiResponse>('/price/v3', { ids: mintList });
 
-      LoggerService.getInstance().debug('Price API response', { response: JSON.stringify(response).substring(0, 500) });
+      LoggerService.getInstance().debug('Price API response', {
+        response: JSON.stringify(response).substring(0, 500),
+      });
 
       const priceData = response.data || response;
 

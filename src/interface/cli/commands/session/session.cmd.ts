@@ -41,7 +41,9 @@ export function createSessionCommands(
         console.log(chalk.dim('  - wallet delete'));
         console.log(chalk.dim('  - transfer'));
       } catch (error) {
-        console.error(chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`));
+        console.error(
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
+        );
         process.exit(1);
       }
     });
@@ -77,7 +79,9 @@ export function createSessionCommands(
         console.log(chalk.yellow('\n⚠️  Previous session is now invalid.'));
         console.log(chalk.dim('Update JUPITER_SESSION on your agent if exported.'));
       } catch (error) {
-        console.error(chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`));
+        console.error(
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
+        );
         process.exit(1);
       }
     });
@@ -109,7 +113,9 @@ export function createSessionCommands(
         console.log(chalk.green('\n✅ Session cleared'));
         console.log(chalk.dim('Run `jupiter session regenerate` to create a new session.'));
       } catch (error) {
-        console.error(chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`));
+        console.error(
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
+        );
         process.exit(1);
       }
     });

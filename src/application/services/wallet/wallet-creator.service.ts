@@ -1,5 +1,5 @@
 import { Keypair } from '@solana/web3.js';
-import * as bs58 from 'bs58';
+import bs58 from 'bs58';
 import { Wallet } from '../../../domain/entities/wallet.entity';
 import { WalletRepository } from '../../../domain/repositories/wallet.repository';
 import { keyEncryptionService } from '../security/key-encryption.service';

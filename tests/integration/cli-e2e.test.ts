@@ -102,7 +102,7 @@ describe('CLI End-to-End Tests', () => {
           encoding: 'utf-8',
           timeout: 5000,
         });
-        (expect as any).fail('Should have thrown an error');
+        (expect as unknown as { fail: (msg: string) => void }).fail('Should have thrown an error');
       } catch (error: unknown) {
         const execError = error as { stdout?: string; message: string };
         expect(execError.stdout || execError.message).toContain('Please run: jupiter init');

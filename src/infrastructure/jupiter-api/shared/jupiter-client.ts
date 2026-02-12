@@ -34,7 +34,9 @@ export class JupiterClient {
     // Request interceptor for logging
     this.client.interceptors.request.use(
       (config) => {
-        LoggerService.getInstance().debug(`Jupiter API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        LoggerService.getInstance().debug(
+          `Jupiter API Request: ${config.method?.toUpperCase()} ${config.url}`
+        );
         return config;
       },
       (error) => Promise.reject(error)

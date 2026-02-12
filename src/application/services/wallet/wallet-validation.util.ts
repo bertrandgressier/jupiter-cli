@@ -1,5 +1,5 @@
 import { Keypair } from '@solana/web3.js';
-import * as bs58 from 'bs58';
+import bs58 from 'bs58';
 import { InvalidWalletNameError, InvalidPrivateKeyError } from '../../../core/errors/wallet.errors';
 
 const BASE58_CHARS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';

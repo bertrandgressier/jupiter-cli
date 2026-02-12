@@ -75,7 +75,9 @@ export class SolanaRpcService {
    */
   async getTokenAccounts(walletAddress: string): Promise<WalletTokens> {
     try {
-      LoggerService.getInstance().debug('Fetching token accounts via Solana RPC', { walletAddress });
+      LoggerService.getInstance().debug('Fetching token accounts via Solana RPC', {
+        walletAddress,
+      });
 
       // Get token accounts
       const tokenResponse = await this.callRpc<TokenAccountResponse>('getTokenAccountsByOwner', [
@@ -109,7 +111,9 @@ export class SolanaRpcService {
         }
       }
 
-      LoggerService.getInstance().info(`Found ${tokens.length} tokens via Solana RPC`, { walletAddress });
+      LoggerService.getInstance().info(`Found ${tokens.length} tokens via Solana RPC`, {
+        walletAddress,
+      });
 
       return {
         address: walletAddress,

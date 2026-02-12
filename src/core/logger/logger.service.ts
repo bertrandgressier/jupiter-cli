@@ -35,12 +35,12 @@ export class LoggerService {
   private createLogger(): PinoLogger {
     const configService = ConfigurationService.getInstance();
     const config = configService.getConfig();
-    
+
     const logLevel = (config.logging?.level || 'info') as LogLevel;
     const logToConsole = this.isVerbose || config.logging?.console || false;
     const logToFile = config.logging?.file !== false; // Default to true
     const maxFiles = config.logging?.maxFiles || 30;
-    
+
     const pathManager = configService.getPathManager();
     const logFilePath = path.join(pathManager.getLogsDir(), 'jupiter.log');
 
@@ -110,9 +110,12 @@ export class LoggerService {
   }
 
   error(message: string, error?: Error, context?: Record<string, unknown>): void {
-    this.logger.error({
-      ...context,
-      err: error,
-    }, message);
+    this.logger.error(
+      {
+        ...context,
+        err: error,
+      },
+      message
+    );
   }
 }
