@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "jupiter": "dist/index.js"
+    "jup-cli": "dist/index.js"
   },
   "files": [
     "dist/**/*",

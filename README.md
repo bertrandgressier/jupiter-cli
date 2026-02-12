@@ -41,39 +41,39 @@ npm link
 
 ```bash
 # Initialize CLI with a master password
-jupiter init --password "YourSecurePassword123!"
+jup-cli init --password "YourSecurePassword123!"
 
 # Set your Jupiter API key (get one at https://portal.jup.ag/)
-jupiter config set-jupiter-key your-api-key-here
+jup-cli config set-jupiter-key your-api-key-here
 
 # Check session status
-jupiter session status
+jup-cli session status
 ```
 
 ### Create or Import Wallets
 
 ```bash
 # Create a new wallet
-jupiter wallet create --name "Trading Wallet"
+jup-cli wallet create --name "Trading Wallet"
 
 # Import an existing wallet (one-time operation)
-jupiter wallet import --name "Main Wallet" --private-key "your-private-key" --password "YourSecurePassword123!"
+jup-cli wallet import --name "Main Wallet" --private-key "your-private-key" --password "YourSecurePassword123!"
 
 # List all wallets
-jupiter wallet list
+jup-cli wallet list
 ```
 
 ### Execute Trades
 
 ```bash
 # Get current prices
-jupiter price get SOL USDC
+jup-cli price get SOL USDC
 
 # Get a quote (dry run)
-jupiter trade swap USDC SOL 0.1 --wallet <wallet-id> --dry-run
+jup-cli trade swap USDC SOL 0.1 --wallet <wallet-id> --dry-run
 
 # Execute a swap
-jupiter trade swap USDC SOL 0.1 --wallet <wallet-id> --yes
+jup-cli trade swap USDC SOL 0.1 --wallet <wallet-id> --yes
 ```
 
 ## 📖 Usage Guide
@@ -86,11 +86,11 @@ Jup CLI uses a unique **session-based security model** that allows agents to ope
 ┌─────────────────────────────────────────────────────────────────┐
 │  SETUP PHASE (Human with master password)                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  $ jupiter init --password <pwd>                                │
+│  $ jup-cli init --password <pwd>                                │
 │      → Creates database                                          │
 │      → Generates SESSION_KEY stored in ~/.solana/jup-cli/   │
 │                                                                  │
-│  $ jupiter wallet import --name "Main" --private-key <key>      │
+│  $ jup-cli wallet import --name "Main" --private-key <key>      │
 │      → Wallet encrypted with session key                         │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
@@ -98,16 +98,16 @@ Jup CLI uses a unique **session-based security model** that allows agents to ope
 │  AGENT PHASE (Autonomous, no password needed)                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  ✅ ALLOWED with session:                                        │
-│     - jupiter wallet list                                        │
-│     - jupiter wallet show <id>                                   │
-│     - jupiter price get SOL USDC                                 │
-│     - jupiter trade swap USDC SOL 0.1 -w <id> -y                │
-│     - jupiter session status                                     │
+│     - jup-cli wallet list                                        │
+│     - jup-cli wallet show <id>                                   │
+│     - jup-cli price get SOL USDC                                 │
+│     - jup-cli trade swap USDC SOL 0.1 -w <id> -y                │
+│     - jup-cli session status                                     │
 │                                                                  │
 │  ❌ PROTECTED (password required):                               │
-│     - jupiter wallet export <id>    → Exposes private key       │
-│     - jupiter wallet delete <id>    → Irreversible              │
-│     - jupiter transfer <...>        → Outgoing transfers        │
+│     - jup-cli wallet export <id>    → Exposes private key       │
+│     - jup-cli wallet delete <id>    → Irreversible              │
+│     - jup-cli transfer <...>        → Outgoing transfers        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,7 +116,7 @@ Jup CLI uses a unique **session-based security model** that allows agents to ope
 #### Global Options
 
 ```bash
-jupiter [options] <command>
+jup-cli [options] <command>
 
 Options:
   -V, --version          Show version number
@@ -129,58 +129,58 @@ Options:
 
 | Command                         | Description                         | Password Required |
 | ------------------------------- | ----------------------------------- | ----------------- |
-| `jupiter init`                  | Initialize CLI with master password | ✅ Yes            |
-| `jupiter init --password <pwd>` | Non-interactive initialization      | ✅ Yes            |
+| `jup-cli init`                  | Initialize CLI with master password | ✅ Yes            |
+| `jup-cli init --password <pwd>` | Non-interactive initialization      | ✅ Yes            |
 
 #### Wallet Management
 
 | Command                                                   | Description                    | Session | Password        |
 | --------------------------------------------------------- | ------------------------------ | ------- | --------------- |
-| `jupiter wallet create --name <name>`                     | Create new wallet              | ✅      | ✅              |
-| `jupiter wallet import --name <name> --private-key <key>` | Import existing wallet         | ❌      | ✅              |
-| `jupiter wallet list`                                     | List all wallets               | ✅      | ❌              |
-| `jupiter wallet show <id>`                                | Show wallet details & balances | ✅      | ❌              |
-| `jupiter wallet export <id>`                              | Export private key             | ❌      | ✅ **Required** |
-| `jupiter wallet delete <id>`                              | Delete wallet                  | ❌      | ✅ **Required** |
+| `jup-cli wallet create --name <name>`                     | Create new wallet              | ✅      | ✅              |
+| `jup-cli wallet import --name <name> --private-key <key>` | Import existing wallet         | ❌      | ✅              |
+| `jup-cli wallet list`                                     | List all wallets               | ✅      | ❌              |
+| `jup-cli wallet show <id>`                                | Show wallet details & balances | ✅      | ❌              |
+| `jup-cli wallet export <id>`                              | Export private key             | ❌      | ✅ **Required** |
+| `jup-cli wallet delete <id>`                              | Delete wallet                  | ❌      | ✅ **Required** |
 
 **Examples:**
 
 ```bash
 # Create a new wallet (uses session)
-jupiter wallet create --name "Trading Bot"
+jup-cli wallet create --name "Trading Bot"
 
 # Import wallet with private key (password required for decryption)
-jupiter wallet import --name "Savings" --private-key "abc123..." --password "mypwd"
+jup-cli wallet import --name "Savings" --private-key "abc123..." --password "mypwd"
 
 # View wallet (no password needed after import)
-jupiter wallet show 31bae462-255a-48f1-8dc6-6d51ae5e5871
+jup-cli wallet show 31bae462-255a-48f1-8dc6-6d51ae5e5871
 
 # Export private key (password REQUIRED - session not allowed)
-jupiter wallet export 31bae462-255a-48f1-8dc6-6d51ae5e5871 --password "mypwd"
+jup-cli wallet export 31bae462-255a-48f1-8dc6-6d51ae5e5871 --password "mypwd"
 ```
 
 #### Price Commands
 
 | Command                               | Description       | Session |
 | ------------------------------------- | ----------------- | ------- |
-| `jupiter price get <token1> <token2>` | Get token prices  | ✅      |
-| `jupiter price search <query>`        | Search for tokens | ✅      |
+| `jup-cli price get <token1> <token2>` | Get token prices  | ✅      |
+| `jup-cli price search <query>`        | Search for tokens | ✅      |
 
 **Examples:**
 
 ```bash
 # Get SOL and USDC prices
-jupiter price get SOL USDC
+jup-cli price get SOL USDC
 
 # Search for a token
-jupiter price search "jupiter"
+jup-cli price search "jupiter"
 ```
 
 #### Trading Commands
 
 | Command                                        | Description        | Session |
 | ---------------------------------------------- | ------------------ | ------- |
-| `jupiter trade swap <input> <output> <amount>` | Execute token swap | ✅      |
+| `jup-cli trade swap <input> <output> <amount>` | Execute token swap | ✅      |
 
 **Options:**
 
@@ -193,32 +193,32 @@ jupiter price search "jupiter"
 
 ```bash
 # Get a quote without executing
-jupiter trade swap USDC SOL 0.1 --wallet <id> --dry-run
+jup-cli trade swap USDC SOL 0.1 --wallet <id> --dry-run
 
 # Execute swap with default slippage
-jupiter trade swap USDC SOL 0.1 --wallet <id> --yes
+jup-cli trade swap USDC SOL 0.1 --wallet <id> --yes
 
 # Execute with custom slippage (0.5%)
-jupiter trade swap USDC SOL 0.1 --wallet <id> --slippage 50 --yes
+jup-cli trade swap USDC SOL 0.1 --wallet <id> --slippage 50 --yes
 ```
 
 #### Session Management
 
 | Command                      | Description            | Password        |
 | ---------------------------- | ---------------------- | --------------- |
-| `jupiter session status`     | Show session status    | ❌              |
-| `jupiter session regenerate` | Regenerate session key | ✅ **Required** |
-| `jupiter session clear`      | Clear current session  | ❌              |
+| `jup-cli session status`     | Show session status    | ❌              |
+| `jup-cli session regenerate` | Regenerate session key | ✅ **Required** |
+| `jup-cli session clear`      | Clear current session  | ❌              |
 
 #### Configuration Commands
 
 | Command                                | Description                               |
 | -------------------------------------- | ----------------------------------------- |
-| `jupiter config show`                  | Display current configuration             |
-| `jupiter config set-jupiter-key <key>` | Set Jupiter API key                       |
-| `jupiter config remove-jupiter-key`    | Remove API key                            |
-| `jupiter config set-rpc <url>`         | Set custom Solana RPC URL                 |
-| `jupiter config set-log-level <level>` | Set logging level (debug/info/warn/error) |
+| `jup-cli config show`                  | Display current configuration             |
+| `jup-cli config set-jupiter-key <key>` | Set Jupiter API key                       |
+| `jup-cli config remove-jupiter-key`    | Remove API key                            |
+| `jup-cli config set-rpc <url>`         | Set custom Solana RPC URL                 |
+| `jup-cli config set-log-level <level>` | Set logging level (debug/info/warn/error) |
 
 ## 🔒 Security Model
 
@@ -314,7 +314,7 @@ By default, logs are written to files only (`~/.solana/jup-cli/logs/jupiter.1.lo
 To enable console logging for debugging:
 
 ```bash
-jupiter --verbose wallet show <id>
+jup-cli --verbose wallet show <id>
 ```
 
 ## 🏗️ Architecture
@@ -398,7 +398,7 @@ The CLI uses Jupiter's Ultra API for optimal swap execution:
 
 Default: `https://api.mainnet-beta.solana.com`
 
-Configurable via `jupiter config set-rpc <url>`
+Configurable via `jup-cli config set-rpc <url>`
 
 ## 🐛 Troubleshooting
 
@@ -408,17 +408,17 @@ If you get "No active session" errors:
 
 ```bash
 # Regenerate session with your password
-jupiter session regenerate --password "your-password"
+jup-cli session regenerate --password "your-password"
 ```
 
 ### API Key Issues
 
 ```bash
 # Verify API key is set
-jupiter config show
+jup-cli config show
 
 # Set a new API key
-jupiter config set-jupiter-key your-new-api-key
+jup-cli config set-jupiter-key your-new-api-key
 ```
 
 ### Permission Errors
