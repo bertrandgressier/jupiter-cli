@@ -8,7 +8,8 @@ export interface CreateOrderParams {
 }
 
 export interface CreateOrderResponse {
-  orderId: string;
+  order: string;
+  orderId?: string;
   transaction: string;
   requestId: string;
 }

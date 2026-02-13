@@ -186,7 +186,7 @@ export function createOrderCommands(
         spinner.stop();
 
         console.log(chalk.green('\n✅ Limit order created!\n'));
-        console.log(`  Order ID: ${orderResponse.orderId}`);
+        console.log(`  Order ID: ${orderResponse.order || orderResponse.orderId}`);
         if (result.signature) {
           console.log(`  Signature: ${chalk.dim(result.signature)}`);
         }
