@@ -255,7 +255,9 @@ export function createOrderCommands(
                   ? chalk.red('Cancelled')
                   : chalk.yellow(ord.status);
             const date = new Date(ord.createdAt).toLocaleDateString();
-            const orderId = (ord.id || ord.orderId || 'unknown').toString().slice(0, 10);
+            const orderId = (ord.orderKey || ord.id || ord.orderId || 'unknown')
+              .toString()
+              .slice(0, 15);
             const inputSymbol = ord.inputSymbol || 'tokens';
             const outputSymbol = ord.outputSymbol || 'tokens';
             table.push([

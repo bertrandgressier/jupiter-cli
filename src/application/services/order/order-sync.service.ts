@@ -129,7 +129,7 @@ export class OrderSyncService {
     const direction: 'up' | 'down' = diffPercent >= 0 ? 'up' : 'down';
 
     return {
-      orderId: order.id || order.orderId || '',
+      orderId: order.orderKey || order.id || order.orderId || '',
       inputMint: order.inputMint,
       outputMint: order.outputMint,
       inputSymbol: inputInfo?.symbol,

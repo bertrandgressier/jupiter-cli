@@ -16,18 +16,37 @@ export interface CreateOrderResponse {
 export interface TriggerOrder {
   id?: string;
   orderId?: string;
+  orderKey?: string;
+  userPubkey?: string;
   maker: string;
   inputMint: string;
   outputMint: string;
   makingAmount: string;
   takingAmount: string;
+  remainingMakingAmount?: string;
+  remainingTakingAmount?: string;
   expiredAt: number | null;
   createdAt: string;
+  updatedAt?: string;
   status: 'active' | 'filled' | 'Completed' | 'cancelled' | 'expired';
   signature?: string;
+  openTx?: string;
+  closeTx?: string;
   filledAt?: string;
   inputSymbol?: string;
   outputSymbol?: string;
+  trades?: TriggerOrderTrade[];
+}
+
+export interface TriggerOrderTrade {
+  orderKey: string;
+  inputMint: string;
+  outputMint: string;
+  inputAmount: string;
+  outputAmount: string;
+  txId: string;
+  confirmedAt: string;
+  action: string;
 }
 
 export interface GetOrdersResponse {
