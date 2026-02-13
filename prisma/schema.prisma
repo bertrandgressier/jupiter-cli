@@ -39,34 +39,49 @@ model Wallet {
   lastUsed    DateTime?
 
   // Relations
-  costBasis   CostBasis[] // Average cost per token (for PnL)
+  trades       Trade[]
 
   @@index([address])
   @@index([isActive])
 }
 
-// === Cost Basis ===
-// Used exclusively for PnL: stores the average purchase price per token
-// Everything else (balance, current price) is fetched via Jupiter API
+// === Trades ===
+// Records all swap and limit order executions for PnL calculation
 
-model CostBasis {
-  id              String   @id @default(uuid())
-  walletId        String
-  wallet          Wallet   @relation(fields: [walletId], references: [id])
+model Trade {
+  id             String    @id @default(uuid())
+  walletId       String
 
-  mint            String   // Token address
-  symbol          String?  // Symbol (SOL, USDC, etc.)
+  // Tokens
+  inputMint      String
+  outputMint     String
+  inputSymbol    String?
+  outputSymbol   String?
 
-  // Average acquisition cost (critical for PnL)
-  avgPriceUsd     String   // Average purchase price (stored as string for precision)
-  totalAcquired   String   // Total quantity acquired (stored as string for precision)
-  totalCostUsd    String   // Total cost in USD (stored as string for precision)
+  // Amounts (human-readable, NOT smallest units)
+  inputAmount    String
+  outputAmount   String
 
-  updatedAt       DateTime @updatedAt
+  // USD prices per unit at execution time
+  inputUsdPrice  String?
+  outputUsdPrice String?
 
-  @@unique([walletId, mint]) // One entry per token per wallet
-  @@index([walletId])
-  @@index([mint])
+  // Computed USD values (amount × price)
+  inputUsdValue  String?
+  outputUsdValue String?
+
+  // Execution metadata
+  type           String    // "swap" | "limit_order"
+  signature      String    // On-chain tx signature
+  executedAt     DateTime  @default(now())
+
+  // Relations
+  wallet         Wallet    @relation(fields: [walletId], references: [id])
+
+  @@index([walletId, executedAt])
+  @@index([walletId, outputMint])
+  @@index([walletId, inputMint])
+  @@index([signature])
 }
 
 // === Token Info ===

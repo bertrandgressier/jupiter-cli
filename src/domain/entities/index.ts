@@ -1,2 +1,2 @@
 export * from './wallet.entity';
-export * from './cost-basis.entity';
+export * from './token-info.entity';
