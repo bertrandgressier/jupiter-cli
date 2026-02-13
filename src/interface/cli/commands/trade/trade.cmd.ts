@@ -11,23 +11,9 @@ import { MasterPasswordService } from '../../../../application/services/security
 import { keyEncryptionService } from '../../../../application/services/security/key-encryption.service';
 import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
+import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
+import { TokenInfoService } from '../../../../application/services/token-info.service';
 import { SessionService } from '../../../../core/session/session.service';
-
-const TOKEN_MINTS: Record<string, { mint: string; decimals: number }> = {
-  SOL: { mint: 'So11111111111111111111111111111111111111112', decimals: 9 },
-  USDC: { mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', decimals: 6 },
-  USDT: { mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', decimals: 6 },
-  JUP: { mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', decimals: 6 },
-  BONK: { mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', decimals: 5 },
-};
-
-function resolveToken(token: string): { mint: string; decimals: number } {
-  const upper = token.toUpperCase();
-  if (TOKEN_MINTS[upper]) {
-    return TOKEN_MINTS[upper];
-  }
-  return { mint: token, decimals: 9 };
-}
 
 function checkJupiterApiKey(dataDir: string | undefined): boolean {
   const configService = new ConfigurationService(dataDir);
@@ -45,8 +31,11 @@ export function createTradeCommands(
   trade
     .command('swap')
     .description('Swap tokens using Jupiter Ultra API')
-    .argument('<inputToken>', 'Input token (SOL, USDC, USDT, JUP, BONK or mint address)')
-    .argument('<outputToken>', 'Output token (SOL, USDC, USDT, JUP, BONK or mint address)')
+    .argument('<inputToken>', 'Input token symbol or mint address (e.g., SOL, USDC, or full mint)')
+    .argument(
+      '<outputToken>',
+      'Output token symbol or mint address (e.g., SOL, USDC, or full mint)'
+    )
     .argument('<amount>', 'Amount of input token to swap')
     .requiredOption('-w, --wallet <identifier>', 'Wallet identifier (number, name, or UUID)')
     .option('-s, --slippage <bps>', 'Slippage tolerance in basis points', '100')
@@ -72,12 +61,19 @@ export function createTradeCommands(
         const walletResolver = new WalletResolverService(walletRepo);
         const sessionService = new SessionService(prisma, dataDir);
         const masterPasswordService = new MasterPasswordService(prisma);
+        const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
+        const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
 
         const wallet = await walletResolver.resolve(options.wallet);
         console.log(chalk.dim(`\nWallet: ${wallet.name} (${wallet.address.slice(0, 8)}...)\n`));
 
-        const input = resolveToken(inputToken);
-        const output = resolveToken(outputToken);
+        spinner.start('Resolving tokens...');
+        const [input, output] = await Promise.all([
+          tokenInfoService.resolveToken(inputToken),
+          tokenInfoService.resolveToken(outputToken),
+        ]);
+        spinner.stop();
+
         const inputAmount = parseFloat(amount);
         const slippageBps = parseInt(options.slippage, 10);
 
@@ -86,9 +82,8 @@ export function createTradeCommands(
           process.exit(1);
         }
 
-        const inputDecimals = TOKEN_MINTS[inputToken.toUpperCase()]?.decimals ?? 9;
         const amountInSmallestUnit = Math.floor(
-          inputAmount * Math.pow(10, inputDecimals)
+          inputAmount * Math.pow(10, input.decimals)
         ).toString();
 
         spinner.start('Getting order from Jupiter Ultra...');
@@ -105,10 +100,8 @@ export function createTradeCommands(
         const priceImpact = parseFloat(order.priceImpactPct);
 
         console.log(chalk.bold('📊 Order\n'));
-        console.log(`  Input:  ${chalk.cyan(amount)} ${inputToken.toUpperCase()}`);
-        console.log(
-          `  Output: ${chalk.green(outputAmount.toFixed(6))} ${outputToken.toUpperCase()}`
-        );
+        console.log(`  Input:  ${chalk.cyan(amount)} ${input.symbol}`);
+        console.log(`  Output: ${chalk.green(outputAmount.toFixed(6))} ${output.symbol}`);
         console.log(
           `  Price Impact: ${
             priceImpact > 1
@@ -133,7 +126,7 @@ export function createTradeCommands(
             {
               type: 'confirm',
               name: 'confirm',
-              message: `Confirm swap ${amount} ${inputToken.toUpperCase()} → ${outputAmount.toFixed(6)} ${outputToken.toUpperCase()}?`,
+              message: `Confirm swap ${amount} ${input.symbol} → ${outputAmount.toFixed(6)} ${output.symbol}?`,
               default: false,
             },
           ]);
@@ -194,8 +187,8 @@ export function createTradeCommands(
 
         if (result.status === 'Success' || result.status === 'Completed') {
           console.log(chalk.green('\n✅ Swap successful!\n'));
-          console.log(`  Input:  ${amount} ${inputToken.toUpperCase()}`);
-          console.log(`  Output: ${outputAmount.toFixed(6)} ${outputToken.toUpperCase()}`);
+          console.log(`  Input:  ${amount} ${input.symbol}`);
+          console.log(`  Output: ${outputAmount.toFixed(6)} ${output.symbol}`);
           console.log(`  Signature: ${chalk.dim(result.signature)}`);
           console.log(chalk.dim(`  https://solscan.io/tx/${result.signature}`));
         } else {

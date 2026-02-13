@@ -10,7 +10,9 @@ import { WalletExporterService } from '../../../../application/services/wallet/w
 import { WalletSyncService } from '../../../../application/services/wallet/wallet-sync.service';
 import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { MasterPasswordService } from '../../../../application/services/security/master-password.service';
+import { TokenInfoService } from '../../../../application/services/token-info.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
+import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
 import { solanaRpcService } from '../../../../infrastructure/solana/solana-rpc.service';
 import { ultraApiService } from '../../../../infrastructure/jupiter-api/ultra/ultra-api.service';
 import { PathManager } from '../../../../core/config/path-manager';
@@ -238,7 +240,14 @@ export function createWalletCommands(
 
         const foundWallet = await walletResolver.resolve(walletIdentifier);
 
-        const walletSync = new WalletSyncService(walletRepo, solanaRpcService, ultraApiService);
+        const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
+        const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApiService);
+        const walletSync = new WalletSyncService(
+          walletRepo,
+          solanaRpcService,
+          ultraApiService,
+          tokenInfoService
+        );
         const state = await walletSync.getWalletState(foundWallet.id);
 
         spinner.stop();
@@ -262,22 +271,22 @@ export function createWalletCommands(
 
         if (state.tokens.length > 0) {
           console.log(chalk.bold('📈 Token Balances'));
-          console.log(chalk.gray('─'.repeat(70)));
+          console.log(chalk.gray('─'.repeat(95)));
           console.log(
-            `${chalk.gray('Token'.padEnd(12))} ${chalk.gray('Amount'.padEnd(15))} ${chalk.gray('Price'.padEnd(12))} ${chalk.gray('Value')}`
+            `${chalk.gray('Token'.padEnd(8))} ${chalk.gray('Mint Address'.padEnd(45))} ${chalk.gray('Amount'.padEnd(14))} ${chalk.gray('Price'.padEnd(10))} ${chalk.gray('Value')}`
           );
-          console.log(chalk.gray('─'.repeat(70)));
+          console.log(chalk.gray('─'.repeat(95)));
 
           for (const token of state.tokens) {
-            const symbol =
-              token.mint === 'So11111111111111111111111111111111111111112'
-                ? 'SOL'
-                : token.mint.slice(0, 8) + '...';
-            const amount = token.amount.toFixed(4).padEnd(15);
-            const price = '$' + token.price.toFixed(2).padEnd(10);
+            const symbol = token.symbol ?? token.mint.slice(0, 8) + '...';
+            const mintDisplay = token.mint.padEnd(45);
+            const amount = token.amount.toFixed(4).padEnd(14);
+            const price = '$' + token.price.toFixed(2).padEnd(8);
             const value = '$' + token.value.toFixed(2);
 
-            console.log(`${symbol.padEnd(12)} ${amount} ${price} ${value}`);
+            console.log(
+              `${chalk.cyan(symbol.padEnd(8))} ${chalk.dim(mintDisplay)} ${amount} ${price} ${value}`
+            );
           }
           console.log();
         }

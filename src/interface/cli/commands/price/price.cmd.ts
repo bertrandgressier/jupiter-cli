@@ -4,6 +4,8 @@ import ora from 'ora';
 import { PrismaClient } from '@prisma/client';
 import { UltraApiService } from '../../../../infrastructure/jupiter-api/ultra/ultra-api.service';
 import { ConfigurationService } from '../../../../core/config/configuration.service';
+import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
+import { TokenInfoService } from '../../../../application/services/token-info.service';
 
 function checkJupiterApiKey(dataDir: string | undefined): boolean {
   const configService = new ConfigurationService(dataDir);
@@ -11,14 +13,13 @@ function checkJupiterApiKey(dataDir: string | undefined): boolean {
 }
 
 export function createPriceCommands(
-  _getPrisma: () => PrismaClient,
+  getPrisma: () => PrismaClient,
   getDataDir: () => string | undefined
 ): Command {
   const price = new Command('price').description('Get token prices and information');
 
   const ultraApi = new UltraApiService();
 
-  // Get price
   price
     .command('get')
     .description('Get price of tokens')
@@ -34,19 +35,21 @@ export function createPriceCommands(
       }
     })
     .action(async (tokens, options) => {
-      const spinner = ora('Fetching prices...').start();
+      const spinner = ora('Resolving tokens...').start();
 
       try {
-        // Handle common symbols
-        const mints = tokens.map((t: string) => {
-          const upper = t.toUpperCase();
-          if (upper === 'SOL') return 'So11111111111111111111111111111111111111112';
-          if (upper === 'USDC') return 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-          if (upper === 'USDT') return 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
-          if (upper === 'BONK') return 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263';
-          return t;
-        });
+        const prisma = getPrisma();
+        const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
+        const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
 
+        const resolvedTokens = await Promise.all(
+          tokens.map((t: string) => tokenInfoService.resolveToken(t))
+        );
+
+        const mints = resolvedTokens.map((t) => t.mint);
+        const symbolMap = new Map(resolvedTokens.map((t) => [t.mint, t.symbol]));
+
+        spinner.text = 'Fetching prices...';
         const prices = await ultraApi.getPrice(mints);
 
         spinner.stop();
@@ -68,25 +71,27 @@ export function createPriceCommands(
         }
 
         console.log(chalk.bold('\n💰 Prices\n'));
-        console.log(`${chalk.gray('Token'.padEnd(44))} ${chalk.gray('Price (USD)')}`);
-        console.log(chalk.gray('─'.repeat(65)));
+        console.log(
+          `${chalk.gray('Token'.padEnd(8))} ${chalk.gray('Mint Address'.padEnd(45))} ${chalk.gray('Price (USD)')}`
+        );
+        console.log(chalk.gray('─'.repeat(70)));
 
         for (const price of prices) {
-          const displayMint = price.mint.slice(0, 42).padEnd(44);
+          const symbol = symbolMap.get(price.mint) ?? price.mint.slice(0, 8) + '...';
+          const mintDisplay = price.mint.padEnd(45);
           const priceStr = price.price > 0 ? `$${price.price.toFixed(6)}` : chalk.gray('N/A');
-          console.log(`${chalk.cyan(displayMint)} ${priceStr}`);
+          console.log(`${chalk.cyan(symbol.padEnd(8))} ${chalk.dim(mintDisplay)} ${priceStr}`);
         }
 
         console.log();
       } catch (error) {
         spinner.fail('Failed to fetch prices');
         console.error(
-          chalk.red(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
         );
       }
     });
 
-  // Search tokens
   price
     .command('search')
     .description('Search for tokens')

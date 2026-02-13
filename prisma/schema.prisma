@@ -56,7 +56,7 @@ model CostBasis {
 
   mint            String   // Token address
   symbol          String?  // Symbol (SOL, USDC, etc.)
-  
+
   // Average acquisition cost (critical for PnL)
   avgPriceUsd     String   // Average purchase price (stored as string for precision)
   totalAcquired   String   // Total quantity acquired (stored as string for precision)
@@ -67,4 +67,19 @@ model CostBasis {
   @@unique([walletId, mint]) // One entry per token per wallet
   @@index([walletId])
   @@index([mint])
+}
+
+// === Token Info ===
+// Stable metadata for tokens (fetched from Jupiter API and cached)
+
+model TokenInfo {
+  mint      String   @id   // Token address (primary key)
+  symbol    String         // e.g., "SOL", "USDC", "JUP"
+  name      String?        // e.g., "Solana", "USD Coin"
+  decimals  Int            // e.g., 9 for SOL, 6 for USDC
+  logoURI   String?
+  verified  Boolean  @default(false)
+  fetchedAt DateTime @default(now())
+
+  @@index([symbol])
 }

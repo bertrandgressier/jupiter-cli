@@ -153,16 +153,30 @@ export class UltraApiService {
     try {
       LoggerService.getInstance().debug('Searching tokens', { query });
 
-      const response = await this.client.get<TokenInfo[]>(`${this.baseUrl}/search`, { query });
+      interface RawSearchResult {
+        id: string;
+        name: string;
+        symbol: string;
+        decimals: number;
+        icon?: string;
+        logoURI?: string;
+        tags?: string[];
+        isVerified?: boolean;
+        verified?: boolean;
+      }
 
-      return response.map((token: TokenInfo) => ({
-        address: token.address,
+      const response = await this.client.get<RawSearchResult[]>(`${this.baseUrl}/search`, {
+        query,
+      });
+
+      return response.map((token: RawSearchResult) => ({
+        address: token.id,
         name: token.name,
         symbol: token.symbol,
         decimals: token.decimals,
-        logoURI: token.logoURI,
+        logoURI: token.icon ?? token.logoURI,
         tags: token.tags,
-        verified: token.verified,
+        verified: token.isVerified ?? token.verified ?? false,
       }));
     } catch (error) {
       LoggerService.getInstance().error('Failed to search tokens', error as Error);
