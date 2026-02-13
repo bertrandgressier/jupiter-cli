@@ -1,3 +1,14 @@
+# [2.1.0](https://github.com/bertrandgressier/jup-cli/compare/v2.0.8...v2.1.0) (2026-02-13)
+
+### Bug Fixes
+
+- remove non-null assertion in test file ([2f3d996](https://github.com/bertrandgressier/jup-cli/commit/2f3d996984f961821976458d88c4a09e513b7c58))
+
+### Features
+
+- add flexible wallet identifier resolution (number, name, UUID) ([58ebf67](https://github.com/bertrandgressier/jup-cli/commit/58ebf67ffb0781edb313f349af14c4663d3b5f52))
+- auto-run migrations on app startup ([ca96664](https://github.com/bertrandgressier/jup-cli/commit/ca9666416142dc11e97faee808c28fc5714dd99f))
+
 ## [2.0.8](https://github.com/bertrandgressier/jup-cli/compare/v2.0.7...v2.0.8) (2026-02-13)
 
 ### Bug Fixes

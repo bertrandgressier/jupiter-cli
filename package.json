@@ -1,6 +1,6 @@
 {
   "name": "jup-cli",
-  "version": "2.0.8",
+  "version": "2.1.0",
   "description": "A secure, multi-wallet CLI for trading on Solana via Jupiter DEX aggregator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
