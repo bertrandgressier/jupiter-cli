@@ -160,6 +160,29 @@ export function createOrderCommands(
 
         const result = await triggerApi.execute(signedTransaction, orderResponse.requestId);
 
+        if (result.signature) {
+          try {
+            const tradeRepo = new PrismaTradeRepository(prisma);
+            const priceProvider = {
+              getPrice: async (mints: string[]) => ultraApi.getPrice(mints),
+            };
+            const tradeService = new TradeService(tradeRepo, priceProvider);
+
+            await tradeService.recordLimitOrderFill({
+              walletId: wallet.id,
+              inputMint: input.mint,
+              outputMint: output.mint,
+              inputAmount: amount,
+              outputAmount: outputAmount.toFixed(6),
+              inputSymbol: input.symbol,
+              outputSymbol: output.symbol,
+              signature: result.signature,
+            });
+          } catch {
+            // Trade recording failed, but order succeeded - don't block user
+          }
+        }
+
         spinner.stop();
 
         console.log(chalk.green('\n✅ Limit order created!\n'));
@@ -226,18 +249,21 @@ export function createOrderCommands(
 
           for (const ord of response.orders) {
             const status =
-              ord.status === 'filled'
-                ? chalk.green('Filled')
+              ord.status === 'filled' || ord.status === 'Completed'
+                ? chalk.green(ord.status)
                 : ord.status === 'cancelled'
                   ? chalk.red('Cancelled')
                   : chalk.yellow(ord.status);
             const date = new Date(ord.createdAt).toLocaleDateString();
+            const orderId = (ord.id || ord.orderId || 'unknown').toString().slice(0, 10);
+            const inputSymbol = ord.inputSymbol || 'tokens';
+            const outputSymbol = ord.outputSymbol || 'tokens';
             table.push([
-              ord.id.slice(0, 10),
+              orderId,
               status,
               date,
-              `${ord.makingAmount} tokens`,
-              `${ord.takingAmount} tokens`,
+              `${ord.makingAmount} ${inputSymbol}`,
+              `${ord.takingAmount} ${outputSymbol}`,
             ]);
           }
 
@@ -262,8 +288,12 @@ export function createOrderCommands(
           });
 
           for (const ord of orders) {
-            const inputStr = `${ord.inputAmount} ${ord.inputSymbol || ord.inputMint.slice(0, 8)}`;
-            const outputStr = `${ord.outputAmount} ${ord.outputSymbol || ord.outputMint.slice(0, 8)}`;
+            const inputSymbol =
+              ord.inputSymbol || (ord.inputMint ? ord.inputMint.slice(0, 8) : '???');
+            const outputSymbol =
+              ord.outputSymbol || (ord.outputMint ? ord.outputMint.slice(0, 8) : '???');
+            const inputStr = `${ord.inputAmount} ${inputSymbol}`;
+            const outputStr = `${ord.outputAmount} ${outputSymbol}`;
             const target = `$${ord.targetPrice.toFixed(2)}`;
             const current = `$${ord.currentPrice.toFixed(2)}`;
             const diff =
@@ -366,7 +396,7 @@ export function createOrderCommands(
             return;
           }
 
-          const orderIds = response.orders.map((o) => o.id);
+          const orderIds = response.orders.map((o) => o.id || o.orderId || '').filter(Boolean);
           spinner.text = `Cancelling ${orderIds.length} order(s)...`;
 
           const cancelResponse = await triggerApi.cancelOrders(wallet.address, orderIds);

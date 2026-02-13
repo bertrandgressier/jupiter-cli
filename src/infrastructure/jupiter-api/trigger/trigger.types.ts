@@ -14,7 +14,8 @@ export interface CreateOrderResponse {
 }
 
 export interface TriggerOrder {
-  id: string;
+  id?: string;
+  orderId?: string;
   maker: string;
   inputMint: string;
   outputMint: string;
@@ -22,9 +23,11 @@ export interface TriggerOrder {
   takingAmount: string;
   expiredAt: number | null;
   createdAt: string;
-  status: 'active' | 'filled' | 'cancelled' | 'expired';
+  status: 'active' | 'filled' | 'Completed' | 'cancelled' | 'expired';
   signature?: string;
   filledAt?: string;
+  inputSymbol?: string;
+  outputSymbol?: string;
 }
 
 export interface GetOrdersResponse {
