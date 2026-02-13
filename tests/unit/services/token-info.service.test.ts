@@ -2,6 +2,7 @@ import { TokenInfoService } from '../../../src/application/services/token-info.s
 import { TokenInfoRepository } from '../../../src/domain/repositories/token-info.repository';
 import { TokenInfo } from '../../../src/domain/entities/token-info.entity';
 import { UltraApiService } from '../../../src/infrastructure/jupiter-api/ultra/ultra-api.service';
+import { TokenNotFoundError } from '../../../src/core/errors/token.errors';
 
 function createTokenInfo(
   mint: string,
@@ -191,6 +192,107 @@ describe('TokenInfoService', () => {
       expect(result.get(usdcMint)?.symbol).toBe('USDC');
       expect(result.get(jupMint)?.symbol).toBe('JUP');
       expect(mockApi.getTokenInfo).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveToken', () => {
+    describe('with mint address', () => {
+      it('should resolve mint address and return token info', async () => {
+        const cachedToken = createTokenInfo(solMint, 'SOL', 9, { name: 'Solana' });
+        mockRepo.findByMint.mockResolvedValueOnce(cachedToken);
+
+        const result = await service.resolveToken(solMint);
+
+        expect(result.mint).toBe(solMint);
+        expect(result.symbol).toBe('SOL');
+        expect(result.decimals).toBe(9);
+        expect(result.name).toBe('Solana');
+      });
+
+      it('should throw TokenNotFoundError for unknown mint address', async () => {
+        mockRepo.findByMint.mockResolvedValueOnce(null);
+        mockApi.getTokenInfo.mockResolvedValueOnce(null);
+
+        await expect(service.resolveToken(unknownMint)).rejects.toThrow(TokenNotFoundError);
+      });
+    });
+
+    describe('with symbol', () => {
+      it('should resolve known symbol without API call', async () => {
+        mockRepo.findByMint.mockResolvedValueOnce(null);
+
+        const result = await service.resolveToken('SOL');
+
+        expect(result.mint).toBe(solMint);
+        expect(result.symbol).toBe('SOL');
+        expect(result.decimals).toBe(9);
+        expect(result.name).toBe('Solana');
+      });
+
+      it('should resolve known symbol case-insensitively', async () => {
+        mockRepo.findByMint.mockResolvedValueOnce(null);
+
+        const result = await service.resolveToken('sol');
+
+        expect(result.mint).toBe(solMint);
+        expect(result.symbol).toBe('SOL');
+      });
+
+      it('should search API for unknown symbol', async () => {
+        mockApi.searchTokens.mockResolvedValueOnce([
+          {
+            address: unknownMint,
+            symbol: 'UNKNOWN',
+            name: 'Unknown Token',
+            decimals: 8,
+            verified: true,
+          },
+        ]);
+
+        const result = await service.resolveToken('UNKNOWN');
+
+        expect(result.mint).toBe(unknownMint);
+        expect(result.symbol).toBe('UNKNOWN');
+        expect(result.decimals).toBe(8);
+        expect(mockApi.searchTokens).toHaveBeenCalledWith('UNKNOWN');
+        expect(mockRepo.upsert).toHaveBeenCalled();
+      });
+
+      it('should prefer exact symbol match from search results', async () => {
+        mockApi.searchTokens.mockResolvedValueOnce([
+          {
+            address: 'differentMint',
+            symbol: 'UNKNOWN2',
+            name: 'Different Token',
+            decimals: 6,
+            verified: false,
+          },
+          {
+            address: unknownMint,
+            symbol: 'UNKNOWN',
+            name: 'Unknown Token',
+            decimals: 8,
+            verified: true,
+          },
+        ]);
+
+        const result = await service.resolveToken('UNKNOWN');
+
+        expect(result.mint).toBe(unknownMint);
+        expect(result.symbol).toBe('UNKNOWN');
+      });
+
+      it('should throw TokenNotFoundError for symbol not found', async () => {
+        mockApi.searchTokens.mockResolvedValueOnce([]);
+
+        await expect(service.resolveToken('NOTEXIST')).rejects.toThrow(TokenNotFoundError);
+      });
+
+      it('should throw TokenNotFoundError when API throws error', async () => {
+        mockApi.searchTokens.mockRejectedValueOnce(new Error('API Error'));
+
+        await expect(service.resolveToken('NOTEXIST')).rejects.toThrow(TokenNotFoundError);
+      });
     });
   });
 });

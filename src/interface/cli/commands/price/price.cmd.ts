@@ -4,52 +4,16 @@ import ora from 'ora';
 import { PrismaClient } from '@prisma/client';
 import { UltraApiService } from '../../../../infrastructure/jupiter-api/ultra/ultra-api.service';
 import { ConfigurationService } from '../../../../core/config/configuration.service';
-
-const MINT_LENGTH = 32;
-
-function isMintAddress(value: string): boolean {
-  return value.length >= MINT_LENGTH && /^[1-9A-HJ-NP-Za-km-z]+$/.test(value);
-}
+import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
+import { TokenInfoService } from '../../../../application/services/token-info.service';
 
 function checkJupiterApiKey(dataDir: string | undefined): boolean {
   const configService = new ConfigurationService(dataDir);
   return !!configService.getConfig().jupiter.apiKey;
 }
 
-async function resolveTokenIdentifiers(
-  identifiers: string[],
-  ultraApi: UltraApiService
-): Promise<{ mints: string[]; symbolMap: Map<string, string> }> {
-  const mints: string[] = [];
-  const symbolMap = new Map<string, string>();
-
-  for (const identifier of identifiers) {
-    if (isMintAddress(identifier)) {
-      mints.push(identifier);
-    } else {
-      try {
-        const searchResults = await ultraApi.searchTokens(identifier);
-        if (searchResults.length > 0) {
-          const exactMatch = searchResults.find(
-            (t) => t.symbol.toUpperCase() === identifier.toUpperCase()
-          );
-          const token = exactMatch ?? searchResults[0];
-          if (token) {
-            mints.push(token.address);
-            symbolMap.set(token.address, token.symbol);
-          }
-        }
-      } catch {
-        mints.push(identifier);
-      }
-    }
-  }
-
-  return { mints, symbolMap };
-}
-
 export function createPriceCommands(
-  _getPrisma: () => PrismaClient,
+  getPrisma: () => PrismaClient,
   getDataDir: () => string | undefined
 ): Command {
   const price = new Command('price').description('Get token prices and information');
@@ -74,7 +38,16 @@ export function createPriceCommands(
       const spinner = ora('Resolving tokens...').start();
 
       try {
-        const { mints, symbolMap } = await resolveTokenIdentifiers(tokens, ultraApi);
+        const prisma = getPrisma();
+        const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
+        const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
+
+        const resolvedTokens = await Promise.all(
+          tokens.map((t: string) => tokenInfoService.resolveToken(t))
+        );
+
+        const mints = resolvedTokens.map((t) => t.mint);
+        const symbolMap = new Map(resolvedTokens.map((t) => [t.mint, t.symbol]));
 
         spinner.text = 'Fetching prices...';
         const prices = await ultraApi.getPrice(mints);
@@ -114,7 +87,7 @@ export function createPriceCommands(
       } catch (error) {
         spinner.fail('Failed to fetch prices');
         console.error(
-          chalk.red(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
         );
       }
     });

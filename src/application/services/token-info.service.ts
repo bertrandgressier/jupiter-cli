@@ -2,10 +2,19 @@ import { TokenInfo } from '../../domain/entities/token-info.entity';
 import { TokenInfoRepository } from '../../domain/repositories/token-info.repository';
 import { UltraApiService } from '../../infrastructure/jupiter-api/ultra/ultra-api.service';
 import { LoggerService } from '../../core/logger/logger.service';
+import { TokenNotFoundError } from '../../core/errors/token.errors';
+
+export interface ResolvedToken {
+  mint: string;
+  symbol: string;
+  decimals: number;
+  name?: string;
+}
 
 export interface TokenInfoProvider {
   getTokenInfo(mint: string): Promise<TokenInfo | null>;
   getTokenInfoBatch(mints: string[]): Promise<Map<string, TokenInfo>>;
+  resolveToken(identifier: string): Promise<ResolvedToken>;
 }
 
 interface KnownToken {
@@ -16,6 +25,9 @@ interface KnownToken {
 }
 
 export class TokenInfoService implements TokenInfoProvider {
+  private static MINT_MIN_LENGTH = 32;
+  private static MINT_REGEX = /^[1-9A-HJ-NP-Za-km-z]+$/;
+
   private static KNOWN_TOKENS: Map<string, KnownToken> = new Map([
     [
       'So11111111111111111111111111111111111111112',
@@ -125,6 +137,85 @@ export class TokenInfoService implements TokenInfoProvider {
     } catch (error) {
       LoggerService.getInstance().warn(
         `Failed to fetch token info for ${mint}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+      return null;
+    }
+  }
+
+  async resolveToken(identifier: string): Promise<ResolvedToken> {
+    if (this.isMintAddress(identifier)) {
+      const tokenInfo = await this.getTokenInfo(identifier);
+      if (tokenInfo) {
+        return {
+          mint: tokenInfo.mint,
+          symbol: tokenInfo.symbol,
+          decimals: tokenInfo.decimals,
+          name: tokenInfo.name,
+        };
+      }
+      throw new TokenNotFoundError(identifier);
+    }
+
+    const upperSymbol = identifier.toUpperCase();
+
+    for (const [mint, known] of TokenInfoService.KNOWN_TOKENS) {
+      if (known.symbol.toUpperCase() === upperSymbol) {
+        await this.getTokenInfo(mint);
+        return {
+          mint,
+          symbol: known.symbol,
+          decimals: known.decimals,
+          name: known.name,
+        };
+      }
+    }
+
+    const searchResult = await this.searchAndCache(identifier);
+    if (searchResult) {
+      return {
+        mint: searchResult.mint,
+        symbol: searchResult.symbol,
+        decimals: searchResult.decimals,
+        name: searchResult.name,
+      };
+    }
+
+    throw new TokenNotFoundError(identifier);
+  }
+
+  private isMintAddress(value: string): boolean {
+    return (
+      value.length >= TokenInfoService.MINT_MIN_LENGTH && TokenInfoService.MINT_REGEX.test(value)
+    );
+  }
+
+  private async searchAndCache(query: string): Promise<TokenInfo | null> {
+    try {
+      LoggerService.getInstance().debug(`Searching token via API for "${query}"`);
+
+      const results = await this.ultraApi.searchTokens(query);
+      if (results.length === 0) {
+        return null;
+      }
+
+      const exactMatch = results.find((t) => t.symbol.toUpperCase() === query.toUpperCase());
+      const token = exactMatch ?? results[0];
+
+      if (!token) {
+        return null;
+      }
+
+      const tokenInfo = new TokenInfo(token.address, token.symbol, token.decimals, {
+        name: token.name,
+        logoURI: token.logoURI,
+        verified: token.verified ?? false,
+      });
+
+      await this.tokenInfoRepo.upsert(tokenInfo);
+      return tokenInfo;
+    } catch (error) {
+      LoggerService.getInstance().warn(
+        `Failed to search token "${query}": ${error instanceof Error ? error.message : 'Unknown error'}`
       );
       return null;
     }
