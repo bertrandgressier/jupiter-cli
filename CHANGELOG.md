@@ -1,3 +1,16 @@
+# [2.2.0](https://github.com/bertrandgressier/jup-cli/compare/v2.1.0...v2.2.0) (2026-02-13)
+
+### Bug Fixes
+
+- fallback to search API when getTokenInfo fails for mint address ([77d0962](https://github.com/bertrandgressier/jup-cli/commit/77d096253199ef1852fb4a43b612dd6dc3109adc))
+
+### Features
+
+- add TokenInfo table for token symbol display ([5ba6096](https://github.com/bertrandgressier/jup-cli/commit/5ba6096590b3857ccccd92a26513a8bbbc9b9c5f))
+- centralize token resolution in TokenInfoService ([39f4473](https://github.com/bertrandgressier/jup-cli/commit/39f44731305d06405e403b8350f636e1d50872a7))
+- display token symbol and mint address in wallet show ([5ff7cb3](https://github.com/bertrandgressier/jup-cli/commit/5ff7cb3cb72986f1b9ff68901e3916b08c11e45f))
+- use Jupiter search API to resolve token symbols ([661c7df](https://github.com/bertrandgressier/jup-cli/commit/661c7dfc469e825f69f58615178db93ef8947aed))
+
 # [2.1.0](https://github.com/bertrandgressier/jup-cli/compare/v2.0.8...v2.1.0) (2026-02-13)
 
 ### Bug Fixes
