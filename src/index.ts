@@ -24,7 +24,9 @@ import { createTradeCommands } from './interface/cli/commands/trade/trade.cmd';
 import { createConfigCommands } from './interface/cli/commands/config/config.cmd';
 import { createSessionCommands } from './interface/cli/commands/session/session.cmd';
 import { ConfigurationService } from './core/config/configuration.service';
+import { PathManager } from './core/config/path-manager';
 import { LoggerService } from './core/logger/logger.service';
+import { MigrationService } from './core/database/migration.service';
 import { PrismaClient } from '@prisma/client';
 
 // Global option for data directory
@@ -41,6 +43,11 @@ class PrismaClientFactory {
       try {
         const configService = ConfigurationService.getInstance(dataDir);
         const databaseUrl = configService.getDatabaseUrl();
+
+        const pathManager = new PathManager(dataDir);
+        if (pathManager.isInitialized()) {
+          MigrationService.runMigrations(databaseUrl);
+        }
 
         PrismaClientFactory.instance = new PrismaClient({
           datasources: {

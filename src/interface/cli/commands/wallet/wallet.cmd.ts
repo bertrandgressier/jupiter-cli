@@ -8,6 +8,7 @@ import { WalletCreatorService } from '../../../../application/services/wallet/wa
 import { WalletImporterService } from '../../../../application/services/wallet/wallet-importer.service';
 import { WalletExporterService } from '../../../../application/services/wallet/wallet-exporter.service';
 import { WalletSyncService } from '../../../../application/services/wallet/wallet-sync.service';
+import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { MasterPasswordService } from '../../../../application/services/security/master-password.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
 import { solanaRpcService } from '../../../../infrastructure/solana/solana-rpc.service';
@@ -52,16 +53,24 @@ export function createWalletCommands(
 
         console.log(chalk.bold('\n📁 Wallets\n'));
         console.log(
-          chalk.gray(`${'ID'.padEnd(38)} ${'Name'.padEnd(20)} ${'Address'.padEnd(45)} Status`)
+          chalk.gray(`${'#'.padEnd(4)} ${'Name'.padEnd(20)} ${'Address'.padEnd(45)} Status`)
         );
-        console.log(chalk.gray('─'.repeat(110)));
+        console.log(chalk.gray('─'.repeat(80)));
 
-        for (const w of wallets) {
+        for (let i = 0; i < wallets.length; i++) {
+          const w = wallets[i];
+          if (!w) continue;
+          const index = String(i + 1).padEnd(4);
           const status = w.isActive ? chalk.green('Active') : chalk.gray('Inactive');
 
-          console.log(`${chalk.cyan(w.id)} ${w.name.padEnd(20)} ${w.address.padEnd(45)} ${status}`);
+          console.log(
+            `${chalk.cyan(index)} ${w.name.padEnd(20)} ${w.address.padEnd(45)} ${status}`
+          );
         }
 
+        console.log();
+        console.log(chalk.dim('Tip: Use wallet number, name, or UUID in commands'));
+        console.log(chalk.dim('Example: jup-cli wallet show 1  or  jup-cli wallet show Trading'));
         console.log();
       } catch (error) {
         spinner.fail('Failed to load wallets');
@@ -218,22 +227,19 @@ export function createWalletCommands(
   wallet
     .command('show')
     .description('Show wallet status and balances (fetched from blockchain in real-time)')
-    .argument('<wallet-id>', 'Wallet UUID')
-    .action(async (walletId) => {
+    .argument('<wallet>', 'Wallet identifier (number, name, or UUID)')
+    .action(async (walletIdentifier) => {
       const spinner = ora('Fetching wallet state from blockchain...').start();
 
       try {
         const prisma = getPrisma();
         const walletRepo = new PrismaWalletRepository(prisma);
-        const foundWallet = await walletRepo.findById(walletId);
+        const walletResolver = new WalletResolverService(walletRepo);
 
-        if (!foundWallet) {
-          spinner.fail('Wallet not found');
-          return;
-        }
+        const foundWallet = await walletResolver.resolve(walletIdentifier);
 
         const walletSync = new WalletSyncService(walletRepo, solanaRpcService, ultraApiService);
-        const state = await walletSync.getWalletState(walletId);
+        const state = await walletSync.getWalletState(foundWallet.id);
 
         spinner.stop();
 
@@ -289,12 +295,22 @@ export function createWalletCommands(
   wallet
     .command('export')
     .description('Export wallet private key (PROTECTED - requires password, session not allowed)')
-    .argument('<wallet-id>', 'Wallet UUID')
+    .argument('<wallet>', 'Wallet identifier (number, name, or UUID)')
     .option('-p, --password <password>', 'Master password')
-    .action(async (walletId, options) => {
+    .action(async (walletIdentifier, options) => {
       const prisma = getPrisma();
       const dataDir = getDataDir();
       const sessionService = new SessionService(prisma, dataDir);
+      const walletRepo = new PrismaWalletRepository(prisma);
+      const walletResolver = new WalletResolverService(walletRepo);
+
+      let wallet;
+      try {
+        wallet = await walletResolver.resolve(walletIdentifier);
+      } catch {
+        console.log(chalk.red('\n❌ Wallet not found'));
+        return;
+      }
 
       const hasSession = await sessionService.hasSession();
       if (hasSession && !options.password) {
@@ -320,11 +336,10 @@ export function createWalletCommands(
       const spinner = ora('Exporting wallet...').start();
 
       try {
-        const walletRepo = new PrismaWalletRepository(prisma);
         const masterPasswordService = new MasterPasswordService(prisma);
         const walletExporter = new WalletExporterService(walletRepo, masterPasswordService);
 
-        const privateKey = await walletExporter.exportPrivateKey(walletId, password);
+        const privateKey = await walletExporter.exportPrivateKey(wallet.id, password);
 
         spinner.succeed('Wallet exported');
 
@@ -343,27 +358,29 @@ export function createWalletCommands(
   wallet
     .command('delete')
     .description('Delete a wallet (PROTECTED - requires password, session not allowed)')
-    .argument('<wallet-id>', 'Wallet UUID')
+    .argument('<wallet>', 'Wallet identifier (number, name, or UUID)')
     .option('-p, --password <password>', 'Master password')
     .option('-f, --force', 'Skip confirmation prompt')
-    .action(async (walletId, options) => {
+    .action(async (walletIdentifier, options) => {
       const prisma = getPrisma();
       const dataDir = getDataDir();
       const sessionService = new SessionService(prisma, dataDir);
+      const walletRepo = new PrismaWalletRepository(prisma);
+      const walletResolver = new WalletResolverService(walletRepo);
+
+      let foundWallet;
+      try {
+        foundWallet = await walletResolver.resolve(walletIdentifier);
+      } catch {
+        console.log(chalk.red('\n❌ Wallet not found'));
+        return;
+      }
 
       const hasSession = await sessionService.hasSession();
       if (hasSession && !options.password) {
         console.log(chalk.yellow('\n🔒 This is a protected command.'));
         console.log(chalk.dim('Session access is not allowed for deleting wallets.'));
         console.log(chalk.dim('Please provide your master password.\n'));
-      }
-
-      const walletRepo = new PrismaWalletRepository(prisma);
-      const foundWallet = await walletRepo.findById(walletId);
-
-      if (!foundWallet) {
-        console.log(chalk.red('\n❌ Wallet not found'));
-        return;
       }
 
       console.log(chalk.dim(`\nWallet: ${foundWallet.name} (${foundWallet.address})`));
@@ -409,12 +426,12 @@ export function createWalletCommands(
           return;
         }
 
-        await walletRepo.delete(walletId);
+        await walletRepo.delete(foundWallet.id);
 
         spinner.succeed('Wallet deleted');
 
         console.log(chalk.green('\n✅ Wallet deleted successfully'));
-        console.log(chalk.dim(`ID: ${walletId}`));
+        console.log(chalk.dim(`ID: ${foundWallet.id}`));
         console.log();
         console.log(
           chalk.yellow('⚠️  The wallet can still be recovered if you have the private key.')

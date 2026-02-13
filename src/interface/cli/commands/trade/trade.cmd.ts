@@ -9,7 +9,7 @@ import { UltraApiService } from '../../../../infrastructure/jupiter-api/ultra/ul
 import { ConfigurationService } from '../../../../core/config/configuration.service';
 import { MasterPasswordService } from '../../../../application/services/security/master-password.service';
 import { keyEncryptionService } from '../../../../application/services/security/key-encryption.service';
-import { WalletManagerService } from '../../../../application/services/wallet/wallet-manager.service';
+import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
 import { SessionService } from '../../../../core/session/session.service';
 
@@ -48,7 +48,7 @@ export function createTradeCommands(
     .argument('<inputToken>', 'Input token (SOL, USDC, USDT, JUP, BONK or mint address)')
     .argument('<outputToken>', 'Output token (SOL, USDC, USDT, JUP, BONK or mint address)')
     .argument('<amount>', 'Amount of input token to swap')
-    .requiredOption('-w, --wallet <id>', 'Wallet ID to use for the swap')
+    .requiredOption('-w, --wallet <identifier>', 'Wallet identifier (number, name, or UUID)')
     .option('-s, --slippage <bps>', 'Slippage tolerance in basis points', '100')
     .option('-p, --password <password>', 'Master password (optional if session exists)')
     .option('-y, --yes', 'Skip confirmation prompt')
@@ -69,11 +69,11 @@ export function createTradeCommands(
         const prisma = getPrisma();
         const dataDir = getDataDir();
         const walletRepo = new PrismaWalletRepository(prisma);
-        const walletManager = new WalletManagerService(walletRepo);
+        const walletResolver = new WalletResolverService(walletRepo);
         const sessionService = new SessionService(prisma, dataDir);
         const masterPasswordService = new MasterPasswordService(prisma);
 
-        const wallet = await walletManager.getWallet(options.wallet);
+        const wallet = await walletResolver.resolve(options.wallet);
         console.log(chalk.dim(`\nWallet: ${wallet.name} (${wallet.address.slice(0, 8)}...)\n`));
 
         const input = resolveToken(inputToken);

@@ -33,6 +33,14 @@ export class PrismaWalletRepository implements WalletRepository {
     return wallet ? this.toEntity(wallet) : null;
   }
 
+  async findByName(name: string): Promise<Wallet | null> {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { name },
+    });
+
+    return wallet ? this.toEntity(wallet) : null;
+  }
+
   async create(wallet: Wallet): Promise<Wallet> {
     const created = await this.prisma.wallet.create({
       data: {

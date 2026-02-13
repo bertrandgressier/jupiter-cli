@@ -28,7 +28,7 @@ model MasterPassword {
 
 model Wallet {
   id          String   @id @default(uuid()) // Opaque UUID
-  name        String                           // User-defined name
+  name        String   @unique                 // User-defined name (unique)
   address     String   @unique                 // Solana public address
   encryptedKey String                          // Private key encrypted with AES-256-GCM
   keyNonce    String                           // Nonce for decryption
