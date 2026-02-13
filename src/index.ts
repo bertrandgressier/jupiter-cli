@@ -17,6 +17,7 @@ import { join } from 'path';
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 const VERSION = packageJson.version;
 
+import { execSync } from 'child_process';
 import { createInitCommand } from './interface/cli/commands/init/init.cmd';
 import { createWalletCommands } from './interface/cli/commands/wallet/wallet.cmd';
 import { createPriceCommands } from './interface/cli/commands/price/price.cmd';
@@ -24,6 +25,7 @@ import { createTradeCommands } from './interface/cli/commands/trade/trade.cmd';
 import { createConfigCommands } from './interface/cli/commands/config/config.cmd';
 import { createSessionCommands } from './interface/cli/commands/session/session.cmd';
 import { ConfigurationService } from './core/config/configuration.service';
+import { PathManager } from './core/config/path-manager';
 import { LoggerService } from './core/logger/logger.service';
 import { PrismaClient } from '@prisma/client';
 
@@ -34,6 +36,24 @@ let dataDir: string | undefined;
 class PrismaClientFactory {
   private static instance: PrismaClient | null = null;
   private static initializing = false;
+  private static migrationsRun = false;
+
+  private static runMigrations(databaseUrl: string): void {
+    if (PrismaClientFactory.migrationsRun) {
+      return;
+    }
+
+    try {
+      execSync('npx prisma migrate deploy', {
+        env: { ...process.env, DATABASE_URL: databaseUrl },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch {
+      // Ignore migration errors - might be fresh install without init
+    }
+
+    PrismaClientFactory.migrationsRun = true;
+  }
 
   static getInstance(): PrismaClient {
     if (!PrismaClientFactory.instance && !PrismaClientFactory.initializing) {
@@ -41,6 +61,11 @@ class PrismaClientFactory {
       try {
         const configService = ConfigurationService.getInstance(dataDir);
         const databaseUrl = configService.getDatabaseUrl();
+
+        const pathManager = new PathManager(dataDir);
+        if (pathManager.isInitialized()) {
+          PrismaClientFactory.runMigrations(databaseUrl);
+        }
 
         PrismaClientFactory.instance = new PrismaClient({
           datasources: {
