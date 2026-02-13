@@ -160,28 +160,8 @@ export function createOrderCommands(
 
         const result = await triggerApi.execute(signedTransaction, orderResponse.requestId);
 
-        if (result.signature) {
-          try {
-            const tradeRepo = new PrismaTradeRepository(prisma);
-            const priceProvider = {
-              getPrice: async (mints: string[]) => ultraApi.getPrice(mints),
-            };
-            const tradeService = new TradeService(tradeRepo, priceProvider);
-
-            await tradeService.recordLimitOrderFill({
-              walletId: wallet.id,
-              inputMint: input.mint,
-              outputMint: output.mint,
-              inputAmount: amount,
-              outputAmount: outputAmount.toFixed(6),
-              inputSymbol: input.symbol,
-              outputSymbol: output.symbol,
-              signature: result.signature,
-            });
-          } catch {
-            // Trade recording failed, but order succeeded - don't block user
-          }
-        }
+        // Note: Trade recording happens via 'order sync' when the order is filled,
+        // not when it's created. Limit orders are pending until matched.
 
         spinner.stop();
 
@@ -398,7 +378,9 @@ export function createOrderCommands(
             return;
           }
 
-          const orderIds = response.orders.map((o) => o.id || o.orderId || '').filter(Boolean);
+          const orderIds = response.orders
+            .map((o) => o.orderKey || o.id || o.orderId || '')
+            .filter(Boolean);
           spinner.text = `Cancelling ${orderIds.length} order(s)...`;
 
           const cancelResponse = await triggerApi.cancelOrders(wallet.address, orderIds);

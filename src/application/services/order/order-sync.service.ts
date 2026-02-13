@@ -43,13 +43,35 @@ export class OrderSyncService {
           continue;
         }
 
+        // Fetch token info for decimals and symbols
+        const tokenInfoMap = await this.tokenInfoProvider.getTokenInfoBatch([
+          order.inputMint,
+          order.outputMint,
+        ]);
+
+        const inputInfo = tokenInfoMap.get(order.inputMint);
+        const outputInfo = tokenInfoMap.get(order.outputMint);
+
+        const inputDecimals = inputInfo?.decimals ?? 9;
+        const outputDecimals = outputInfo?.decimals ?? 6;
+
+        // Convert from smallest units (lamports) to human-readable amounts
+        const inputAmount = (
+          parseFloat(order.makingAmount) / Math.pow(10, inputDecimals)
+        ).toString();
+        const outputAmount = (
+          parseFloat(order.takingAmount) / Math.pow(10, outputDecimals)
+        ).toString();
+
         await this.tradeService.recordLimitOrderFill({
           walletId,
           inputMint: order.inputMint,
           outputMint: order.outputMint,
-          inputAmount: order.makingAmount,
-          outputAmount: order.takingAmount,
+          inputAmount,
+          outputAmount,
           signature: order.signature,
+          inputSymbol: inputInfo?.symbol,
+          outputSymbol: outputInfo?.symbol,
         });
 
         newTradesCount++;

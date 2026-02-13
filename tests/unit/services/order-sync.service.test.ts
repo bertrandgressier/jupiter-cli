@@ -4,6 +4,7 @@ import { TradeService } from '../../../src/application/services/trade/trade.serv
 import { PriceProvider } from '../../../src/application/services/wallet/wallet-sync.service';
 import { TokenInfoProvider } from '../../../src/application/services/token-info.service';
 import { Trade } from '../../../src/domain/entities/trade.entity';
+import { TokenInfo } from '../../../src/domain/entities/token-info.entity';
 
 describe('OrderSyncService', () => {
   let service: OrderSyncService;
@@ -79,6 +80,12 @@ describe('OrderSyncService', () => {
       });
       mockTradeService.isTradeRecorded.mockResolvedValue(false);
       mockTradeService.recordLimitOrderFill.mockResolvedValue({} as unknown as Trade);
+      mockTokenInfoProvider.getTokenInfoBatch.mockResolvedValue(
+        new Map([
+          [SOL_MINT, new TokenInfo(SOL_MINT, 'SOL', 9)],
+          [USDC_MINT, new TokenInfo(USDC_MINT, 'USDC', 6)],
+        ])
+      );
 
       const count = await service.syncFilledOrders('wallet-1', 'wallet-address');
 
@@ -144,6 +151,12 @@ describe('OrderSyncService', () => {
       });
       mockTradeService.isTradeRecorded.mockResolvedValue(false);
       mockTradeService.recordLimitOrderFill.mockResolvedValue({} as unknown as Trade);
+      mockTokenInfoProvider.getTokenInfoBatch.mockResolvedValue(
+        new Map([
+          [SOL_MINT, new TokenInfo(SOL_MINT, 'SOL', 9)],
+          [USDC_MINT, new TokenInfo(USDC_MINT, 'USDC', 6)],
+        ])
+      );
 
       const count = await service.syncFilledOrders('wallet-1', 'wallet-address');
 

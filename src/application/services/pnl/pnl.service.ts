@@ -97,9 +97,11 @@ export class PnLService {
         });
       }
 
-      const outputCost = costs.get(trade.outputMint)!;
-      outputCost.totalAcquired = outputCost.totalAcquired.plus(outputAmount);
-      outputCost.remainingCost = outputCost.remainingCost.plus(outputUsdValue);
+      const outputCost = costs.get(trade.outputMint);
+      if (outputCost) {
+        outputCost.totalAcquired = outputCost.totalAcquired.plus(outputAmount);
+        outputCost.remainingCost = outputCost.remainingCost.plus(outputUsdValue);
+      }
 
       if (!costs.has(trade.inputMint)) {
         costs.set(trade.inputMint, {
@@ -110,7 +112,10 @@ export class PnLService {
         });
       }
 
-      const inputCost = costs.get(trade.inputMint)!;
+      const inputCost = costs.get(trade.inputMint);
+      if (!inputCost) {
+        continue;
+      }
 
       if (inputCost.totalAcquired.gt(0) && inputAmount.gt(0)) {
         const remainingUnits = inputCost.totalAcquired.minus(inputCost.totalDisposed);

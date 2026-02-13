@@ -21,7 +21,10 @@ import { PathManager } from '../../../../core/config/path-manager';
 import { SessionService } from '../../../../core/session/session.service';
 import { PnLService } from '../../../../application/services/pnl/pnl.service';
 import { TradeService } from '../../../../application/services/trade/trade.service';
-import { OrderSyncService } from '../../../../application/services/order/order-sync.service';
+import {
+  OrderSyncService,
+  ActiveOrderWithPrice,
+} from '../../../../application/services/order/order-sync.service';
 
 export function createWalletCommands(
   getPrisma: () => PrismaClient,
@@ -266,14 +269,20 @@ export function createWalletCommands(
         const tradeService = new TradeService(tradeRepo, priceProvider);
         const recentTrades = await tradeService.getRecentTrades(foundWallet.id, 5);
 
-        const triggerApi = new TriggerApiService();
-        const orderSyncService = new OrderSyncService(
-          triggerApi,
-          tradeService,
-          priceProvider,
-          tokenInfoService
-        );
-        const activeOrders = await orderSyncService.getActiveOrdersWithPrices(foundWallet.address);
+        // Fetch active orders (requires Jupiter API key)
+        let activeOrders: ActiveOrderWithPrice[] = [];
+        try {
+          const triggerApi = new TriggerApiService();
+          const orderSyncService = new OrderSyncService(
+            triggerApi,
+            tradeService,
+            priceProvider,
+            tokenInfoService
+          );
+          activeOrders = await orderSyncService.getActiveOrdersWithPrices(foundWallet.address);
+        } catch (_error) {
+          // Jupiter API key not configured or API error - skip active orders display
+        }
 
         spinner.stop();
 

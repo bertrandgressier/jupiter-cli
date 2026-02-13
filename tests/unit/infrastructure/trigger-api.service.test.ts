@@ -45,6 +45,8 @@ describe('TriggerApiService', () => {
           takingAmount: '200000000',
           expiredAt: undefined,
         },
+        computeUnitPrice: 'auto',
+        wrapAndUnwrapSol: true,
       });
       expect(result.orderId).toBe('order-123');
     });
@@ -97,6 +99,8 @@ describe('TriggerApiService', () => {
           takingAmount: '200000000',
           expiredAt: 1735689600,
         },
+        computeUnitPrice: 'auto',
+        wrapAndUnwrapSol: true,
       });
     });
   });
@@ -182,6 +186,7 @@ describe('TriggerApiService', () => {
       expect(mockClient.post).toHaveBeenCalledWith('/trigger/v1/cancelOrder', {
         maker: 'wallet-address',
         order: 'order-123',
+        computeUnitPrice: 'auto',
       });
       expect(result.transaction).toBe('cancel-tx');
     });
@@ -211,6 +216,7 @@ describe('TriggerApiService', () => {
       expect(mockClient.post).toHaveBeenCalledWith('/trigger/v1/cancelOrders', {
         maker: 'wallet-address',
         orders: ['order-1', 'order-2'],
+        computeUnitPrice: 'auto',
       });
       expect(result.transactions).toEqual(['tx1', 'tx2']);
     });

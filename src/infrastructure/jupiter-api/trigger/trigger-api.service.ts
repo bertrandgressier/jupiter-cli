@@ -26,6 +26,8 @@ export class TriggerApiService {
         takingAmount: params.takingAmount,
         expiredAt: params.expiredAt,
       },
+      computeUnitPrice: 'auto',
+      wrapAndUnwrapSol: true,
     });
 
     return response;
@@ -49,6 +51,7 @@ export class TriggerApiService {
     const response = await this.client.post<CancelOrderResponse>('/trigger/v1/cancelOrder', {
       maker,
       order: orderId,
+      computeUnitPrice: 'auto',
     });
 
     return response;
@@ -58,6 +61,7 @@ export class TriggerApiService {
     const response = await this.client.post<CancelOrdersResponse>('/trigger/v1/cancelOrders', {
       maker,
       orders: orderIds,
+      computeUnitPrice: 'auto',
     });
 
     return response;

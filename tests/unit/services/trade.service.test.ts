@@ -181,6 +181,10 @@ describe('TradeService', () => {
     });
 
     it('should calculate implicit price from makingAmount/takingAmount', async () => {
+      mockPriceProvider.getPrice.mockResolvedValue([
+        { mint: SOL_MINT, price: 180, timestamp: new Date() },
+        { mint: USDC_MINT, price: 1, timestamp: new Date() },
+      ]);
       mockTradeRepo.create.mockImplementation(async (trade) => trade);
 
       const result = await service.recordLimitOrderFill({
@@ -192,7 +196,7 @@ describe('TradeService', () => {
         signature: 'sig-456',
       });
 
-      expect(result.inputUsdValue).toBe('200');
+      expect(result.inputUsdValue).toBe('180');
       expect(result.outputUsdValue).toBe('200');
     });
 

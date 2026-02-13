@@ -99,8 +99,33 @@ export class TradeService {
       return existing;
     }
 
-    const inputUsdValue = params.outputAmount;
-    const outputUsdValue = params.outputAmount;
+    // Fetch current prices for USD value calculation
+    let inputUsdPrice: string | undefined;
+    let outputUsdPrice: string | undefined;
+    let inputUsdValue: string | undefined;
+    let outputUsdValue: string | undefined;
+
+    try {
+      const prices = await this.priceProvider.getPrice([params.inputMint, params.outputMint]);
+      const priceMap = new Map(prices.map((p) => [p.mint, p.price]));
+
+      const inputPrice =
+        priceMap.get(params.inputMint) ?? this.getStablecoinPrice(params.inputMint);
+      const outputPrice =
+        priceMap.get(params.outputMint) ?? this.getStablecoinPrice(params.outputMint);
+
+      if (inputPrice !== undefined) {
+        inputUsdPrice = inputPrice.toString();
+        inputUsdValue = (parseFloat(params.inputAmount) * inputPrice).toString();
+      }
+
+      if (outputPrice !== undefined) {
+        outputUsdPrice = outputPrice.toString();
+        outputUsdValue = (parseFloat(params.outputAmount) * outputPrice).toString();
+      }
+    } catch {
+      // Price fetch failed, store undefined values
+    }
 
     const trade = new Trade(
       randomUUID(),
@@ -114,8 +139,8 @@ export class TradeService {
       new Date(),
       params.inputSymbol,
       params.outputSymbol,
-      undefined,
-      undefined,
+      inputUsdPrice,
+      outputUsdPrice,
       inputUsdValue,
       outputUsdValue
     );
