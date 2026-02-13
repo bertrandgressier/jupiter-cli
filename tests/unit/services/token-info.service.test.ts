@@ -212,8 +212,31 @@ describe('TokenInfoService', () => {
       it('should throw TokenNotFoundError for unknown mint address', async () => {
         mockRepo.findByMint.mockResolvedValueOnce(null);
         mockApi.getTokenInfo.mockResolvedValueOnce(null);
+        mockApi.searchTokens.mockResolvedValueOnce([]);
 
         await expect(service.resolveToken(unknownMint)).rejects.toThrow(TokenNotFoundError);
+      });
+
+      it('should fallback to search API when getTokenInfo fails for mint address', async () => {
+        mockRepo.findByMint.mockResolvedValueOnce(null);
+        mockApi.getTokenInfo.mockResolvedValueOnce(null);
+        mockApi.searchTokens.mockResolvedValueOnce([
+          {
+            address: unknownMint,
+            symbol: 'PYTH',
+            name: 'Pyth Network',
+            decimals: 6,
+            verified: true,
+          },
+        ]);
+
+        const result = await service.resolveToken(unknownMint);
+
+        expect(result.mint).toBe(unknownMint);
+        expect(result.symbol).toBe('PYTH');
+        expect(result.decimals).toBe(6);
+        expect(result.name).toBe('Pyth Network');
+        expect(mockApi.searchTokens).toHaveBeenCalledWith(unknownMint);
       });
     });
 

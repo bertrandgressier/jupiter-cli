@@ -153,6 +153,17 @@ export class TokenInfoService implements TokenInfoProvider {
           name: tokenInfo.name,
         };
       }
+
+      const searchResult = await this.searchAndCache(identifier);
+      if (searchResult) {
+        return {
+          mint: searchResult.mint,
+          symbol: searchResult.symbol,
+          decimals: searchResult.decimals,
+          name: searchResult.name,
+        };
+      }
+
       throw new TokenNotFoundError(identifier);
     }
 
