@@ -22,7 +22,7 @@ export function createSessionCommands(
 
         if (!info.exists) {
           console.log(chalk.yellow('\n⚠️ No active session'));
-          console.log(chalk.dim('Run `jupiter init` to create a session.'));
+          console.log(chalk.dim('Run `jup-cli init` to create a session.'));
           return;
         }
 
@@ -39,7 +39,6 @@ export function createSessionCommands(
         console.log(chalk.yellow('Protected operations (require password):'));
         console.log(chalk.dim('  - wallet export'));
         console.log(chalk.dim('  - wallet delete'));
-        console.log(chalk.dim('  - transfer'));
       } catch (error) {
         console.error(
           chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -111,7 +110,7 @@ export function createSessionCommands(
         await sessionService.clearSession();
 
         console.log(chalk.green('\n✅ Session cleared'));
-        console.log(chalk.dim('Run `jupiter session regenerate` to create a new session.'));
+        console.log(chalk.dim('Run `jup-cli session regenerate` to create a new session.'));
       } catch (error) {
         console.error(
           chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)

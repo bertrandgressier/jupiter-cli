@@ -106,7 +106,7 @@ describe('CLI End-to-End Tests', () => {
         (expect as unknown as { fail: (msg: string) => void }).fail('Should have thrown an error');
       } catch (error: unknown) {
         const execError = error as { stdout?: string; message: string };
-        expect(execError.stdout || execError.message).toContain('Please run: jupiter init');
+        expect(execError.stdout || execError.message).toContain('Please run: jup-cli init');
       } finally {
         if (fs.existsSync(newDir)) {
           fs.rmSync(newDir, { recursive: true, force: true });

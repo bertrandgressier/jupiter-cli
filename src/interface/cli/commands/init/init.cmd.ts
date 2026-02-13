@@ -125,20 +125,18 @@ export function createInitCommand(getDataDir: () => string | undefined): Command
           console.log(chalk.yellow('\n⚠️  No Jupiter API key configured.'));
           console.log(chalk.dim('Trading commands require an API key.'));
           console.log(chalk.dim('Get one at: https://portal.jup.ag/'));
-          console.log(chalk.dim('Then run: jupiter config set-jupiter-key'));
+          console.log(chalk.dim('Then run: jup-cli config set-jupiter-key'));
         }
 
         console.log(chalk.dim('\nYou can now:'));
-        console.log(chalk.dim('  - Create wallets: jupiter wallet create'));
-        console.log(chalk.dim('  - Import wallets: jupiter wallet import'));
-        console.log(chalk.dim('  - View config:    jupiter config show'));
-        console.log(chalk.dim('  - Check session:  jupiter session status'));
+        console.log(chalk.dim('  - Create wallets: jup-cli wallet create'));
+        console.log(chalk.dim('  - Import wallets: jup-cli wallet import'));
+        console.log(chalk.dim('  - View config:    jup-cli config show'));
+        console.log(chalk.dim('  - Check session:  jup-cli session status'));
 
         console.log(chalk.cyan('\n🔐 Session Info:'));
         console.log(chalk.dim('The agent can operate autonomously with the session.'));
-        console.log(
-          chalk.dim('Protected commands (wallet export, delete, transfer) require password.')
-        );
+        console.log(chalk.dim('Protected commands (wallet export, delete) require password.'));
 
         if (dataDir) {
           console.log(chalk.dim(`\n⚠️  Remember to use --data-dir ${dataDir} for all commands`));

@@ -27,7 +27,7 @@ export function createWalletCommands(
 
     if (!pathManager.isInitialized()) {
       console.error(chalk.red('\n❌ Jup CLI is not initialized.\n'));
-      console.log(chalk.dim('Please run: jupiter init\n'));
+      console.log(chalk.dim('Please run: jup-cli init\n'));
       process.exit(1);
     }
   });
@@ -46,7 +46,7 @@ export function createWalletCommands(
         spinner.stop();
 
         if (wallets.length === 0) {
-          console.log(chalk.yellow('No wallets found. Create one with: jupiter wallet create'));
+          console.log(chalk.yellow('No wallets found. Create one with: jup-cli wallet create'));
           return;
         }
 
@@ -419,7 +419,7 @@ export function createWalletCommands(
         console.log(
           chalk.yellow('⚠️  The wallet can still be recovered if you have the private key.')
         );
-        console.log(chalk.dim('Use `jupiter wallet import` to restore it.'));
+        console.log(chalk.dim('Use `jup-cli wallet import` to restore it.'));
       } catch (error) {
         spinner.fail('Failed to delete wallet');
         console.error(

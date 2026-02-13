@@ -58,7 +58,7 @@ export function createTradeCommands(
         console.error(chalk.red('\n❌ Jupiter API key not configured.\n'));
         console.log(chalk.dim('Trading commands require a Jupiter API key.'));
         console.log(chalk.dim('Get one at: https://portal.jup.ag/'));
-        console.log(chalk.dim('Then run: jupiter config set-jupiter-key\n'));
+        console.log(chalk.dim('Then run: jup-cli config set-jupiter-key\n'));
         process.exit(1);
       }
     })

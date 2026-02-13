@@ -85,7 +85,7 @@ const program = new Command();
 
 program
   .name('jup-cli')
-  .description('Jup CLI - Trade on Solana with multi-wallet support and PnL tracking')
+  .description('Jup CLI - Trade on Solana with multi-wallet support')
   .version(VERSION)
   .option('-d, --data-dir <path>', 'Data directory path (default: ~/.solana/jup-cli/)')
   .option('-v, --verbose', 'Enable verbose logging to console')
@@ -115,18 +115,18 @@ program.addCommand(createSessionCommands(getPrismaClient, getDataDir));
 program.on('--help', () => {
   console.log('');
   console.log(chalk.bold('Examples:'));
-  console.log('  $ jupiter init                              # Initialize CLI');
-  console.log('  $ jupiter --data-dir ./my-data init         # Initialize with custom path');
-  console.log('  $ jupiter config set-jupiter-key            # Set API key');
-  console.log('  $ jupiter wallet list                       # List wallets');
-  console.log('  $ jupiter price get SOL USDC                # Get prices');
-  console.log('  $ jupiter trade swap --wallet <id> SOL USDC 1   # Execute swap');
-  console.log('  $ jupiter transfer scan --wallet <id>       # Scan transfers');
-  console.log('  $ jupiter pnl show --wallet <id>            # Show PnL');
+  console.log('  $ jup-cli init                              # Initialize CLI');
+  console.log('  $ jup-cli --data-dir ./my-data init         # Initialize with custom path');
+  console.log('  $ jup-cli config set-jupiter-key            # Set API key');
+  console.log('  $ jup-cli wallet list                       # List wallets');
+  console.log('  $ jup-cli wallet create -n Trading          # Create named wallet');
+  console.log('  $ jup-cli price get SOL USDC                # Get prices');
+  console.log('  $ jup-cli trade swap -w <id> SOL USDC 1     # Execute swap');
+  console.log('  $ jup-cli session status                    # Check session');
   console.log('');
   console.log(chalk.dim('Configuration:'));
   console.log(chalk.dim('  All settings are stored in: ~/.solana/jup-cli/config.yaml'));
-  console.log(chalk.dim('  Use "jupiter config" commands to manage settings'));
+  console.log(chalk.dim('  Use "jup-cli config" commands to manage settings'));
   console.log('');
 });
 
