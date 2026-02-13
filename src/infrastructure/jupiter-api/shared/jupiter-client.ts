@@ -57,14 +57,39 @@ export class JupiterClient {
     }
 
     const status = error.response.status;
-    const data = error.response.data as { error?: string };
+    const data = error.response.data;
+
+    LoggerService.getInstance().error('Jupiter API error response', undefined, {
+      status,
+      data: typeof data === 'string' ? data : JSON.stringify(data),
+    });
 
     if (status === 429) {
       const retryAfter = parseInt(error.response.headers['retry-after'] || '60');
       throw new RateLimitError(retryAfter);
     }
 
-    throw new JupiterApiError(data?.error || error.message, status, data);
+    const errorMessage = this.extractErrorMessage(data) || error.message;
+    throw new JupiterApiError(
+      errorMessage,
+      status,
+      typeof data === 'object' ? (data as Record<string, unknown>) : { raw: data }
+    );
+  }
+
+  private extractErrorMessage(data: unknown): string | null {
+    if (!data) return null;
+    if (typeof data === 'string') return data;
+    if (typeof data !== 'object') return null;
+
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.error === 'string') return obj.error;
+    if (typeof obj.message === 'string') return obj.message;
+    if (obj.error && typeof obj.error === 'object' && 'message' in obj.error) {
+      return String((obj.error as Record<string, unknown>).message);
+    }
+
+    return null;
   }
 
   async get<T>(

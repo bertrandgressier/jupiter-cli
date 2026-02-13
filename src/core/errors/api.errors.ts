@@ -12,7 +12,7 @@ export class ApiError extends Error {
 
 export class JupiterApiError extends ApiError {
   constructor(message: string, statusCode: number, details?: Record<string, unknown>) {
-    super(`Jupiter API error: ${message}`, 'JUPITER_API_ERROR', statusCode, details);
+    super(message, 'JUPITER_API_ERROR', statusCode, details);
     this.name = 'JupiterApiError';
   }
 }

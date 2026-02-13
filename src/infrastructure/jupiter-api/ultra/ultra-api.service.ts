@@ -6,6 +6,7 @@ import {
   PriceDataEntry,
 } from '../../../application/ports/jupiter-api.port';
 import { LoggerService } from '../../../core/logger/logger.service';
+import { JupiterApiError } from '../../../core/errors/api.errors';
 
 export interface UltraOrderResponse {
   transaction: string;
@@ -35,8 +36,15 @@ export interface UltraOrderResponse {
 
 export interface UltraExecuteResponse {
   status: string;
-  signature: string;
+  signature?: string;
   slot?: number;
+  error?: string;
+  code?: string;
+  details?: {
+    reason?: string;
+    message?: string;
+    [key: string]: unknown;
+  };
   result?: {
     inputAccount?: string;
     outputAccount?: string;
@@ -82,8 +90,22 @@ export class UltraApiService {
 
       const response = await this.client.get<UltraOrderResponse>(`${this.baseUrl}/order`, params);
 
+      if (!response.transaction || response.transaction.length === 0) {
+        LoggerService.getInstance().error('Empty transaction in order response', undefined, {
+          response: JSON.stringify(response).substring(0, 500),
+        });
+        throw new JupiterApiError(
+          'No transaction returned from Jupiter. This usually means insufficient balance or the swap cannot be routed.',
+          400,
+          { response }
+        );
+      }
+
       return response;
     } catch (error) {
+      if (error instanceof JupiterApiError) {
+        throw error;
+      }
       LoggerService.getInstance().error('Failed to get Ultra order', error as Error);
       throw error;
     }
@@ -98,8 +120,39 @@ export class UltraApiService {
         requestId,
       });
 
+      LoggerService.getInstance().debug('Ultra execute response', {
+        status: response.status,
+        error: response.error,
+        code: response.code,
+        details: response.details,
+      });
+
+      if (response.status === 'Failed' || response.error) {
+        const errorMessage =
+          response.details?.reason ||
+          response.details?.message ||
+          response.error ||
+          `Swap failed with status: ${response.status}`;
+        LoggerService.getInstance().error('Ultra order execution failed', undefined, {
+          status: response.status,
+          error: response.error,
+          code: response.code,
+          details: response.details,
+        });
+        throw new JupiterApiError(errorMessage, 400, {
+          status: response.status,
+          error: response.error,
+          code: response.code,
+          details: response.details,
+          signature: response.signature,
+        });
+      }
+
       return response;
     } catch (error) {
+      if (error instanceof JupiterApiError) {
+        throw error;
+      }
       LoggerService.getInstance().error('Failed to execute Ultra order', error as Error);
       throw error;
     }

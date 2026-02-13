@@ -53,7 +53,7 @@ describe('Jupiter API Mocks', () => {
     it('should handle API errors gracefully', async () => {
       nock(baseURL).get('/price/v3').query(true).reply(401, { error: 'Unauthorized' });
 
-      await expect(ultraApi.getPrice(['SOL'])).rejects.toThrow('Jupiter API error');
+      await expect(ultraApi.getPrice(['SOL'])).rejects.toThrow('Unauthorized');
     });
 
     it('should handle rate limiting', async () => {
