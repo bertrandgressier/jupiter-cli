@@ -14,6 +14,20 @@ import { PrismaWalletRepository } from '../../../../infrastructure/repositories/
 import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
 import { TokenInfoService } from '../../../../application/services/token-info.service';
 import { SessionService } from '../../../../core/session/session.service';
+import { JupiterApiError } from '../../../../core/errors/api.errors';
+
+function getFriendlyErrorMessage(error: string): string {
+  if (error.includes('Reached end of buffer') || error.includes('unexpectedly')) {
+    return 'Transaction simulation failed. This usually means insufficient token balance or account does not exist.';
+  }
+  if (error.includes('insufficient') && error.includes('balance')) {
+    return 'Insufficient balance to complete this swap.';
+  }
+  if (error.includes('slippage') || error.includes('Slippage')) {
+    return 'Slippage tolerance exceeded. Try increasing slippage with --slippage option.';
+  }
+  return error;
+}
 
 function checkJupiterApiKey(dataDir: string | undefined): boolean {
   const configService = new ConfigurationService(dataDir);
@@ -189,18 +203,31 @@ export function createTradeCommands(
           console.log(chalk.green('\n✅ Swap successful!\n'));
           console.log(`  Input:  ${amount} ${input.symbol}`);
           console.log(`  Output: ${outputAmount.toFixed(6)} ${output.symbol}`);
-          console.log(`  Signature: ${chalk.dim(result.signature)}`);
-          console.log(chalk.dim(`  https://solscan.io/tx/${result.signature}`));
+          if (result.signature) {
+            console.log(`  Signature: ${chalk.dim(result.signature)}`);
+            console.log(chalk.dim(`  https://solscan.io/tx/${result.signature}`));
+          }
         } else {
           console.log(chalk.yellow(`\n⚠️ Swap status: ${result.status}\n`));
-          console.log(`  Signature: ${chalk.dim(result.signature)}`);
-          console.log(chalk.dim(`  https://solscan.io/tx/${result.signature}`));
+          if (result.signature) {
+            console.log(`  Signature: ${chalk.dim(result.signature)}`);
+            console.log(chalk.dim(`  https://solscan.io/tx/${result.signature}`));
+          }
         }
       } catch (error) {
         spinner.fail('Swap failed');
-        console.error(
-          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
-        );
+        if (error instanceof JupiterApiError) {
+          const friendlyMessage = getFriendlyErrorMessage(error.message);
+          console.error(chalk.red(`\n❌ ${friendlyMessage}`));
+          if (error.details?.code) {
+            console.error(chalk.dim(`   Code: ${error.details.code}`));
+          }
+        } else {
+          const friendlyMessage = getFriendlyErrorMessage(
+            error instanceof Error ? error.message : 'Unknown error'
+          );
+          console.error(chalk.red(`\n❌ ${friendlyMessage}`));
+        }
         process.exit(1);
       }
     });
