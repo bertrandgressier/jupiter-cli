@@ -38,35 +38,8 @@ model Wallet {
   createdAt   DateTime @default(now())
   lastUsed    DateTime?
 
-  // Relations
-  costBasis   CostBasis[] // Average cost per token (for PnL)
-
   @@index([address])
   @@index([isActive])
-}
-
-// === Cost Basis ===
-// Used exclusively for PnL: stores the average purchase price per token
-// Everything else (balance, current price) is fetched via Jupiter API
-
-model CostBasis {
-  id              String   @id @default(uuid())
-  walletId        String
-  wallet          Wallet   @relation(fields: [walletId], references: [id])
-
-  mint            String   // Token address
-  symbol          String?  // Symbol (SOL, USDC, etc.)
-
-  // Average acquisition cost (critical for PnL)
-  avgPriceUsd     String   // Average purchase price (stored as string for precision)
-  totalAcquired   String   // Total quantity acquired (stored as string for precision)
-  totalCostUsd    String   // Total cost in USD (stored as string for precision)
-
-  updatedAt       DateTime @updatedAt
-
-  @@unique([walletId, mint]) // One entry per token per wallet
-  @@index([walletId])
-  @@index([mint])
 }
 
 // === Token Info ===

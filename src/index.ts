@@ -23,6 +23,7 @@ import { createPriceCommands } from './interface/cli/commands/price/price.cmd';
 import { createTradeCommands } from './interface/cli/commands/trade/trade.cmd';
 import { createConfigCommands } from './interface/cli/commands/config/config.cmd';
 import { createSessionCommands } from './interface/cli/commands/session/session.cmd';
+import { createOrderCommands } from './interface/cli/commands/order/order.cmd';
 import { ConfigurationService } from './core/config/configuration.service';
 import { PathManager } from './core/config/path-manager';
 import { LoggerService } from './core/logger/logger.service';
@@ -117,6 +118,7 @@ program.addCommand(createPriceCommands(getPrismaClient, getDataDir));
 program.addCommand(createTradeCommands(getPrismaClient, getDataDir));
 program.addCommand(createConfigCommands(getDataDir));
 program.addCommand(createSessionCommands(getPrismaClient, getDataDir));
+program.addCommand(createOrderCommands(getPrismaClient, getDataDir));
 
 // Default help
 program.on('--help', () => {

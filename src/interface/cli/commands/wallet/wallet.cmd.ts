@@ -15,8 +15,13 @@ import { PrismaWalletRepository } from '../../../../infrastructure/repositories/
 import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
 import { solanaRpcService } from '../../../../infrastructure/solana/solana-rpc.service';
 import { ultraApiService } from '../../../../infrastructure/jupiter-api/ultra/ultra-api.service';
+import { TriggerApiService } from '../../../../infrastructure/jupiter-api/trigger/trigger-api.service';
 import { PathManager } from '../../../../core/config/path-manager';
 import { SessionService } from '../../../../core/session/session.service';
+import {
+  OrderSyncService,
+  ActiveOrderWithPrice,
+} from '../../../../application/services/order/order-sync.service';
 
 export function createWalletCommands(
   getPrisma: () => PrismaClient,
@@ -250,6 +255,24 @@ export function createWalletCommands(
         );
         const state = await walletSync.getWalletState(foundWallet.id);
 
+        const priceProvider = {
+          getPrice: async (mints: string[]) => ultraApiService.getPrice(mints),
+        };
+
+        // Fetch active orders (requires Jupiter API key)
+        let activeOrders: ActiveOrderWithPrice[] = [];
+        try {
+          const triggerApi = new TriggerApiService();
+          const orderSyncService = new OrderSyncService(
+            triggerApi,
+            priceProvider,
+            tokenInfoService
+          );
+          activeOrders = await orderSyncService.getActiveOrdersWithPrices(foundWallet.address);
+        } catch (_error) {
+          // Jupiter API key not configured or API error - skip active orders display
+        }
+
         spinner.stop();
 
         console.log(chalk.bold('\n📊 Wallet Status\n'));
@@ -271,26 +294,35 @@ export function createWalletCommands(
 
         if (state.tokens.length > 0) {
           console.log(chalk.bold('📈 Token Balances'));
-          console.log(chalk.gray('─'.repeat(95)));
+          console.log(chalk.gray('─'.repeat(80)));
           console.log(
-            `${chalk.gray('Token'.padEnd(8))} ${chalk.gray('Mint Address'.padEnd(45))} ${chalk.gray('Amount'.padEnd(14))} ${chalk.gray('Price'.padEnd(10))} ${chalk.gray('Value')}`
+            `${chalk.gray('Token'.padEnd(8))} ${chalk.gray('Amount'.padEnd(14))} ${chalk.gray('Price'.padEnd(10))} ${chalk.gray('Value')}`
           );
-          console.log(chalk.gray('─'.repeat(95)));
+          console.log(chalk.gray('─'.repeat(80)));
 
           for (const token of state.tokens) {
             const symbol = token.symbol ?? token.mint.slice(0, 8) + '...';
-            const mintDisplay = token.mint.padEnd(45);
             const amount = token.amount.toFixed(4).padEnd(14);
             const price = '$' + token.price.toFixed(2).padEnd(8);
             const value = '$' + token.value.toFixed(2);
 
-            console.log(
-              `${chalk.cyan(symbol.padEnd(8))} ${chalk.dim(mintDisplay)} ${amount} ${price} ${value}`
-            );
+            console.log(`${chalk.cyan(symbol.padEnd(8))} ${amount} ${price} ${value}`);
           }
           console.log();
         }
 
+        if (activeOrders.length > 0) {
+          const totalBlocked = activeOrders.reduce((sum, o) => sum + o.inputUsdValue, 0);
+          console.log(
+            chalk.bold(`⏳ Active Limit Orders: `) +
+              chalk.yellow(`${activeOrders.length}`) +
+              chalk.dim(` ($${totalBlocked.toFixed(2)} blocked) `) +
+              chalk.dim(`→ use 'jupiter order list -w ${foundWallet.name}' for details`)
+          );
+          console.log();
+        }
+
+        console.log();
         console.log(chalk.dim('Data fetched in real-time from Solana RPC + Jupiter API'));
         console.log();
       } catch (error) {
