@@ -24,6 +24,7 @@ import { createTradeCommands } from './interface/cli/commands/trade/trade.cmd';
 import { createConfigCommands } from './interface/cli/commands/config/config.cmd';
 import { createSessionCommands } from './interface/cli/commands/session/session.cmd';
 import { createOrderCommands } from './interface/cli/commands/order/order.cmd';
+import { createTokenCommands } from './interface/cli/commands/token/token.cmd';
 import { ConfigurationService } from './core/config/configuration.service';
 import { PathManager } from './core/config/path-manager';
 import { LoggerService } from './core/logger/logger.service';
@@ -119,6 +120,7 @@ program.addCommand(createTradeCommands(getPrismaClient, getDataDir));
 program.addCommand(createConfigCommands(getDataDir));
 program.addCommand(createSessionCommands(getPrismaClient, getDataDir));
 program.addCommand(createOrderCommands(getPrismaClient, getDataDir));
+program.addCommand(createTokenCommands(getDataDir));
 
 // Default help
 program.on('--help', () => {
@@ -132,6 +134,10 @@ program.on('--help', () => {
   console.log('  $ jup-cli price get SOL USDC                # Get prices');
   console.log('  $ jup-cli trade swap -w <id> SOL USDC 1     # Execute swap');
   console.log('  $ jup-cli session status                    # Check session');
+  console.log('  $ jup-cli token search SOL                  # Search tokens');
+  console.log('  $ jup-cli token info <mint>                 # Token details + security');
+  console.log('  $ jup-cli token trending                    # Trending tokens');
+  console.log('  $ jup-cli token shield <mint>               # Security check');
   console.log('');
   console.log(chalk.dim('Configuration:'));
   console.log(chalk.dim('  All settings are stored in: ~/.solana/jup-cli/config.yaml'));
