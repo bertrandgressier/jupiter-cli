@@ -24,8 +24,6 @@ import { createTradeCommands } from './interface/cli/commands/trade/trade.cmd';
 import { createConfigCommands } from './interface/cli/commands/config/config.cmd';
 import { createSessionCommands } from './interface/cli/commands/session/session.cmd';
 import { createOrderCommands } from './interface/cli/commands/order/order.cmd';
-import { createHistoryCommands } from './interface/cli/commands/history/history.cmd';
-import { createPnlCommands } from './interface/cli/commands/pnl/pnl.cmd';
 import { ConfigurationService } from './core/config/configuration.service';
 import { PathManager } from './core/config/path-manager';
 import { LoggerService } from './core/logger/logger.service';
@@ -121,8 +119,6 @@ program.addCommand(createTradeCommands(getPrismaClient, getDataDir));
 program.addCommand(createConfigCommands(getDataDir));
 program.addCommand(createSessionCommands(getPrismaClient, getDataDir));
 program.addCommand(createOrderCommands(getPrismaClient, getDataDir));
-program.addCommand(createHistoryCommands(getPrismaClient, getDataDir));
-program.addCommand(createPnlCommands(getPrismaClient, getDataDir));
 
 // Default help
 program.on('--help', () => {

@@ -1,9 +1,7 @@
 import { TriggerApiService } from '../../../infrastructure/jupiter-api/trigger/trigger-api.service';
 import { TriggerOrder } from '../../../infrastructure/jupiter-api/trigger/trigger.types';
-import { TradeService } from '../trade/trade.service';
 import { PriceProvider } from '../wallet/wallet-sync.service';
 import { TokenInfoProvider } from '../token-info.service';
-import { LoggerService } from '../../../core/logger/logger.service';
 
 export interface ActiveOrderWithPrice {
   orderId: string;
@@ -23,68 +21,9 @@ export interface ActiveOrderWithPrice {
 export class OrderSyncService {
   constructor(
     private triggerApi: TriggerApiService,
-    private tradeService: TradeService,
     private priceProvider: PriceProvider,
     private tokenInfoProvider: TokenInfoProvider
   ) {}
-
-  async syncFilledOrders(walletId: string, walletAddress: string): Promise<number> {
-    try {
-      const response = await this.triggerApi.getOrders(walletAddress, 'history');
-      let newTradesCount = 0;
-
-      for (const order of response.orders) {
-        if ((order.status !== 'filled' && order.status !== 'Completed') || !order.signature) {
-          continue;
-        }
-
-        const alreadyRecorded = await this.tradeService.isTradeRecorded(order.signature);
-        if (alreadyRecorded) {
-          continue;
-        }
-
-        // Fetch token info for decimals and symbols
-        const tokenInfoMap = await this.tokenInfoProvider.getTokenInfoBatch([
-          order.inputMint,
-          order.outputMint,
-        ]);
-
-        const inputInfo = tokenInfoMap.get(order.inputMint);
-        const outputInfo = tokenInfoMap.get(order.outputMint);
-
-        const inputDecimals = inputInfo?.decimals ?? 9;
-        const outputDecimals = outputInfo?.decimals ?? 6;
-
-        // Convert from smallest units (lamports) to human-readable amounts
-        const inputAmount = (
-          parseFloat(order.makingAmount) / Math.pow(10, inputDecimals)
-        ).toString();
-        const outputAmount = (
-          parseFloat(order.takingAmount) / Math.pow(10, outputDecimals)
-        ).toString();
-
-        await this.tradeService.recordLimitOrderFill({
-          walletId,
-          inputMint: order.inputMint,
-          outputMint: order.outputMint,
-          inputAmount,
-          outputAmount,
-          signature: order.signature,
-          inputSymbol: inputInfo?.symbol,
-          outputSymbol: outputInfo?.symbol,
-        });
-
-        newTradesCount++;
-      }
-
-      return newTradesCount;
-    } catch (error) {
-      LoggerService.getInstance().warn(
-        `Failed to sync filled orders: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      return 0;
-    }
-  }
 
   async getActiveOrdersWithPrices(walletAddress: string): Promise<ActiveOrderWithPrice[]> {
     const response = await this.triggerApi.getOrders(walletAddress, 'active');

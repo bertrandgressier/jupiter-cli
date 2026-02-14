@@ -38,50 +38,8 @@ model Wallet {
   createdAt   DateTime @default(now())
   lastUsed    DateTime?
 
-  // Relations
-  trades       Trade[]
-
   @@index([address])
   @@index([isActive])
-}
-
-// === Trades ===
-// Records all swap and limit order executions for PnL calculation
-
-model Trade {
-  id             String    @id @default(uuid())
-  walletId       String
-
-  // Tokens
-  inputMint      String
-  outputMint     String
-  inputSymbol    String?
-  outputSymbol   String?
-
-  // Amounts (human-readable, NOT smallest units)
-  inputAmount    String
-  outputAmount   String
-
-  // USD prices per unit at execution time
-  inputUsdPrice  String?
-  outputUsdPrice String?
-
-  // Computed USD values (amount × price)
-  inputUsdValue  String?
-  outputUsdValue String?
-
-  // Execution metadata
-  type           String    // "swap" | "limit_order"
-  signature      String    // On-chain tx signature
-  executedAt     DateTime  @default(now())
-
-  // Relations
-  wallet         Wallet    @relation(fields: [walletId], references: [id])
-
-  @@index([walletId, executedAt])
-  @@index([walletId, outputMint])
-  @@index([walletId, inputMint])
-  @@index([signature])
 }
 
 // === Token Info ===

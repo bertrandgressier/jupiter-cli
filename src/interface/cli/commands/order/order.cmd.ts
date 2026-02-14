@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import Table from 'cli-table3';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import { PrismaClient } from '@prisma/client';
@@ -9,11 +8,9 @@ import bs58 from 'bs58';
 import { TriggerApiService } from '../../../../infrastructure/jupiter-api/trigger/trigger-api.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
 import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
-import { PrismaTradeRepository } from '../../../../infrastructure/repositories/prisma-trade.repository';
 import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { TokenInfoService } from '../../../../application/services/token-info.service';
 import { OrderSyncService } from '../../../../application/services/order/order-sync.service';
-import { TradeService } from '../../../../application/services/trade/trade.service';
 import { SessionService } from '../../../../core/session/session.service';
 import { MasterPasswordService } from '../../../../application/services/security/master-password.service';
 import { keyEncryptionService } from '../../../../application/services/security/key-encryption.service';
@@ -189,7 +186,6 @@ export function createOrderCommands(
         const prisma = getPrisma();
         const walletRepo = new PrismaWalletRepository(prisma);
         const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
-        const tradeRepo = new PrismaTradeRepository(prisma);
         const walletResolver = new WalletResolverService(walletRepo);
         const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
 
@@ -197,13 +193,7 @@ export function createOrderCommands(
           getPrice: async (mints: string[]) => ultraApi.getPrice(mints),
         };
 
-        const tradeService = new TradeService(tradeRepo, priceProvider);
-        const orderSyncService = new OrderSyncService(
-          triggerApi,
-          tradeService,
-          priceProvider,
-          tokenInfoService
-        );
+        const orderSyncService = new OrderSyncService(triggerApi, priceProvider, tokenInfoService);
 
         const wallet = await walletResolver.resolve(options.wallet);
         console.log(chalk.dim(`\nWallet: ${wallet.name}\n`));
@@ -216,16 +206,11 @@ export function createOrderCommands(
             return;
           }
 
-          const table = new Table({
-            head: [
-              chalk.gray('ID'),
-              chalk.gray('Status'),
-              chalk.gray('Created'),
-              chalk.gray('Input'),
-              chalk.gray('Output'),
-            ],
-            colWidths: [15, 12, 20, 20, 20],
-          });
+          console.log(chalk.bold('\nOrder History\n'));
+          console.log(
+            `${chalk.gray('ID').padEnd(15)} ${chalk.gray('Status').padEnd(12)} ${chalk.gray('Created').padEnd(20)} ${chalk.gray('Input').padEnd(20)} ${chalk.gray('Output')}`
+          );
+          console.log(chalk.gray('─'.repeat(87)));
 
           for (const ord of response.orders) {
             const status =
@@ -240,16 +225,10 @@ export function createOrderCommands(
               .slice(0, 15);
             const inputSymbol = ord.inputSymbol || 'tokens';
             const outputSymbol = ord.outputSymbol || 'tokens';
-            table.push([
-              orderId,
-              status,
-              date,
-              `${ord.makingAmount} ${inputSymbol}`,
-              `${ord.takingAmount} ${outputSymbol}`,
-            ]);
+            console.log(
+              `${orderId.padEnd(15)} ${status.padEnd(12)} ${date.padEnd(20)} ${`${ord.makingAmount} ${inputSymbol}`.padEnd(20)} ${ord.takingAmount} ${outputSymbol}`
+            );
           }
-
-          console.log(table.toString());
         } else {
           const orders = await orderSyncService.getActiveOrdersWithPrices(wallet.address);
 
@@ -258,16 +237,11 @@ export function createOrderCommands(
             return;
           }
 
-          const table = new Table({
-            head: [
-              chalk.gray('Input'),
-              chalk.gray('Output'),
-              chalk.gray('Target'),
-              chalk.gray('Current'),
-              chalk.gray('Diff'),
-            ],
-            colWidths: [20, 20, 12, 12, 12],
-          });
+          console.log(chalk.bold('\nActive Orders\n'));
+          console.log(
+            `${chalk.gray('Input').padEnd(20)} ${chalk.gray('Output').padEnd(20)} ${chalk.gray('Target').padEnd(12)} ${chalk.gray('Current').padEnd(12)} ${chalk.gray('Diff')}`
+          );
+          console.log(chalk.gray('─'.repeat(76)));
 
           for (const ord of orders) {
             const inputSymbol =
@@ -285,62 +259,14 @@ export function createOrderCommands(
                   )
                 : chalk.red(`${ord.diffPercent.toFixed(1)}% ${ord.direction === 'up' ? '↑' : '↓'}`);
 
-            table.push([inputStr, outputStr, target, current, diff]);
+            console.log(
+              `${inputStr.padEnd(20)} ${outputStr.padEnd(20)} ${target.padEnd(12)} ${current.padEnd(12)} ${diff}`
+            );
           }
 
-          console.log(table.toString());
           console.log(chalk.dim(`\n${orders.length} active order(s)`));
         }
       } catch (error) {
-        console.error(
-          chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
-        );
-        process.exit(1);
-      }
-    });
-
-  order
-    .command('sync')
-    .description('Sync filled limit orders as trades')
-    .requiredOption('-w, --wallet <identifier>', 'Wallet identifier')
-    .action(async (options) => {
-      const spinner = ora();
-
-      try {
-        const prisma = getPrisma();
-        const walletRepo = new PrismaWalletRepository(prisma);
-        const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
-        const tradeRepo = new PrismaTradeRepository(prisma);
-        const walletResolver = new WalletResolverService(walletRepo);
-        const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
-
-        const priceProvider = {
-          getPrice: async (mints: string[]) => ultraApi.getPrice(mints),
-        };
-
-        const tradeService = new TradeService(tradeRepo, priceProvider);
-        const orderSyncService = new OrderSyncService(
-          triggerApi,
-          tradeService,
-          priceProvider,
-          tokenInfoService
-        );
-
-        const wallet = await walletResolver.resolve(options.wallet);
-
-        spinner.start('Syncing filled orders...');
-
-        const count = await orderSyncService.syncFilledOrders(wallet.id, wallet.address);
-
-        spinner.stop();
-
-        if (count === 0) {
-          console.log(chalk.dim('No new filled orders to sync.'));
-        } else {
-          console.log(chalk.green(`\n✅ Synced ${count} new trade(s).\n`));
-        }
-      } catch (error) {
-        spinner.fail('Sync failed');
         console.error(
           chalk.red(`\n❌ ${error instanceof Error ? error.message : 'Unknown error'}`)
         );

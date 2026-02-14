@@ -12,9 +12,7 @@ import { keyEncryptionService } from '../../../../application/services/security/
 import { WalletResolverService } from '../../../../application/services/wallet/wallet-resolver.service';
 import { PrismaWalletRepository } from '../../../../infrastructure/repositories/prisma-wallet.repository';
 import { PrismaTokenInfoRepository } from '../../../../infrastructure/repositories/prisma-token-info.repository';
-import { PrismaTradeRepository } from '../../../../infrastructure/repositories/prisma-trade.repository';
 import { TokenInfoService } from '../../../../application/services/token-info.service';
-import { TradeService } from '../../../../application/services/trade/trade.service';
 import { SessionService } from '../../../../core/session/session.service';
 import { JupiterApiError } from '../../../../core/errors/api.errors';
 
@@ -76,13 +74,6 @@ export function createTradeCommands(
         const masterPasswordService = new MasterPasswordService(prisma);
         const tokenInfoRepo = new PrismaTokenInfoRepository(prisma);
         const tokenInfoService = new TokenInfoService(tokenInfoRepo, ultraApi);
-        const tradeRepo = new PrismaTradeRepository(prisma);
-
-        const priceProvider = {
-          getPrice: async (mints: string[]) => ultraApi.getPrice(mints),
-        };
-
-        const tradeService = new TradeService(tradeRepo, priceProvider);
 
         const wallet = await walletResolver.resolve(options.wallet);
         console.log(chalk.dim(`\nWallet: ${wallet.name} (${wallet.address.slice(0, 8)}...)\n`));
@@ -206,23 +197,6 @@ export function createTradeCommands(
         spinner.stop();
 
         if (result.status === 'Success' || result.status === 'Completed') {
-          if (result.signature) {
-            try {
-              await tradeService.recordSwap({
-                walletId: wallet.id,
-                inputMint: input.mint,
-                outputMint: output.mint,
-                inputAmount: amount,
-                outputAmount: outputAmount.toFixed(6),
-                inputSymbol: input.symbol,
-                outputSymbol: output.symbol,
-                signature: result.signature,
-              });
-            } catch {
-              // Trade recording failed, but swap succeeded - don't block user
-            }
-          }
-
           console.log(chalk.green('\n✅ Swap successful!\n'));
           console.log(`  Input:  ${amount} ${input.symbol}`);
           console.log(`  Output: ${outputAmount.toFixed(6)} ${output.symbol}`);
